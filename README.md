@@ -17,17 +17,32 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
 - **Core linear algebra** with deterministic matrix operations
 - **42 specialized utility tools** for memory, strings, math, bits, checksums, encoding, RNG, sorting, and timing
 - **BITRAF** for bit-level operations and compression
+- **BITSTACK** for non-linear logic operations with opportunity detection
 - **ZIPRAF** for archiving and data compression
 - **RAFSTORE** for storage management (memory pools, ring buffers, KV store, LRU cache)
 - **TOROID** for toroidal topology structures and spatial operations
 - **Hardware detection** with CPU feature identification
 
-**Documentation:** See [rafaelia-baremetal/README.md](rafaelia-baremetal/README.md) for details
+**Recent Improvements:**
+- ✅ Warning-free compilation across all modules
+- ✅ Comprehensive integration examples with 6 real-world scenarios
+- ✅ Complete API usage guide with 100+ code examples
+- ✅ All tests passing successfully
+
+**Documentation:**
+- [Main Documentation](rafaelia-baremetal/README.md) - Module overview and quick start
+- [Complete API Guide](rafaelia-baremetal/docs/API_GUIDE.md) - Comprehensive examples for all modules
+- [42 Tools Reference](rafaelia-baremetal/docs/42_TOOLS.md) - Utility tools documentation
 
 **Build with baremetal support:**
 ```bash
 cmake -B build -DRAFAELIA_BAREMETAL=ON
 cmake --build build --config Release
+
+# Run tests and examples
+./build/bin/rafaelia-test
+./build/bin/rafaelia-example
+./build/bin/rafaelia-integration
 ```
 
 ---

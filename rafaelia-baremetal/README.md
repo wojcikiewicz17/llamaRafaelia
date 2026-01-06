@@ -76,11 +76,55 @@ The baremetal module can be built independently or as part of the llama.cpp proj
 # Build with baremetal support
 cmake -B build -DRAFAELIA_BAREMETAL=ON
 cmake --build build --config Release
+
+# Run tests
+./build/bin/rafaelia-test
+
+# Run basic examples
+./build/bin/rafaelia-example
+
+# Run comprehensive integration examples
+./build/bin/rafaelia-integration
 ```
 
 ## Usage
 
-See individual component documentation in their respective directories.
+### Quick Start
+
+```c
+#include "rafaelia_baremetal.h"
+
+int main(void) {
+    // Detect hardware
+    raf_cpu_features features;
+    raf_detect_cpu_features(&features);
+    
+    // Create matrix
+    raf_matrix *m = raf_matrix_create(3, 3);
+    raf_matrix_identity(m);
+    
+    // Use utilities
+    raf_prng prng;
+    raf_prng_init(&prng, 12345);
+    uint64_t random = raf_prng_next(&prng);
+    
+    // Cleanup
+    raf_matrix_destroy(m);
+    return 0;
+}
+```
+
+### Documentation
+
+- **[Complete API Guide](docs/API_GUIDE.md)** - Comprehensive examples for all modules
+- **[42 Tools Documentation](docs/42_TOOLS.md)** - Detailed utility tools reference
+- **[Technical Specifications](docs/TECHNICAL.md)** - Architecture and implementation details
+- **[Summary](docs/SUMMARY.md)** - High-level overview
+
+See also:
+- `example.c` - Basic usage examples for each module
+- `integration_example.c` - Real-world integration scenarios
+- Individual module READMEs in component directories
 
 ## Design Principles
 
