@@ -147,6 +147,10 @@ if(RAFAELIA_BAREMETAL)
         # Also build example
         add_executable(rafaelia-example example.c)
         target_link_libraries(rafaelia-example rafaelia-baremetal)
+        
+        # Build integration example
+        add_executable(rafaelia-integration integration_example.c)
+        target_link_libraries(rafaelia-integration rafaelia-baremetal)
     endif()
     
 endif()
