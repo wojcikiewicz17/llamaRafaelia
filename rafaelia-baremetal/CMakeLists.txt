@@ -24,6 +24,7 @@ if(RAFAELIA_BAREMETAL)
     include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/core
         ${CMAKE_CURRENT_SOURCE_DIR}/bitraf
+        ${CMAKE_CURRENT_SOURCE_DIR}/bitstack
         ${CMAKE_CURRENT_SOURCE_DIR}/zipraf
         ${CMAKE_CURRENT_SOURCE_DIR}/rafstore
         ${CMAKE_CURRENT_SOURCE_DIR}/toroid
@@ -40,6 +41,12 @@ if(RAFAELIA_BAREMETAL)
     set(RAFAELIA_BITRAF_SOURCES
         bitraf/raf_bitraf.c
         bitraf/raf_bitraf.h
+    )
+    
+    # BITSTACK library sources (new low-level logic module)
+    set(RAFAELIA_BITSTACK_SOURCES
+        bitstack/raf_bitstack.c
+        bitstack/raf_bitstack.h
     )
     
     # ZIPRAF library sources
@@ -76,6 +83,7 @@ if(RAFAELIA_BAREMETAL)
     add_library(rafaelia-baremetal STATIC
         ${RAFAELIA_CORE_SOURCES}
         ${RAFAELIA_BITRAF_SOURCES}
+        ${RAFAELIA_BITSTACK_SOURCES}
         ${RAFAELIA_ZIPRAF_SOURCES}
         ${RAFAELIA_RAFSTORE_SOURCES}
         ${RAFAELIA_TOROID_SOURCES}
@@ -92,6 +100,7 @@ if(RAFAELIA_BAREMETAL)
     install(FILES
         core/raf_core.h
         bitraf/raf_bitraf.h
+        bitstack/raf_bitstack.h
         zipraf/raf_zipraf.h
         rafstore/raf_rafstore.h
         toroid/raf_toroid.h
@@ -114,6 +123,7 @@ if(RAFAELIA_BAREMETAL)
 
 #include \"core/raf_core.h\"
 #include \"bitraf/raf_bitraf.h\"
+#include \"bitstack/raf_bitstack.h\"
 #include \"zipraf/raf_zipraf.h\"
 #include \"rafstore/raf_rafstore.h\"
 #include \"toroid/raf_toroid.h\"

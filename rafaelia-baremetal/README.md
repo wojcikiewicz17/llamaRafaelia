@@ -33,11 +33,24 @@ This module contains original implementations by Rafael Melo Reis and is also pr
 
 - **core/**: Fundamental baremetal operations and utilities
 - **bitraf/**: Bit-level operations and compression
+- **bitstack/**: Low-level non-linear logic operations (NEW)
 - **zipraf/**: Archiving and compression utilities
 - **rafstore/**: Storage management and data structures
 - **toroid/**: Toroidal topology implementations
 - **hardware/**: Hardware detection and register access
 - **utils/**: Collection of 42 specialized utility tools
+
+### NEW: BITSTACK Module
+
+The **bitstack/** module implements non-linear logic operations using bit-stack methodology:
+
+- **Single-Flip Operations**: Core logic based on individual bit flips with cascade effects
+- **Opportunity Detection**: Multi-point measurement to identify optimal positions
+- **Deterministic Calculations**: Hash-based state tracking for reproducible results
+- **Non-Linear Propagation**: State changes that propagate based on current state
+- **Iterative Solving**: Reach target states through optimized flip sequences
+
+See [bitstack/README.md](bitstack/README.md) for complete documentation.
 
 ### The 42 Utility Tools
 
