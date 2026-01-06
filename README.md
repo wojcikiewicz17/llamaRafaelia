@@ -10,6 +10,28 @@
 
 LLM inference in C/C++
 
+## Rafaelia Baremetal Module
+
+This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependency-free C library for baremetal computing with deterministic operations. The module provides:
+
+- **Core linear algebra** with deterministic matrix operations
+- **42 specialized utility tools** for memory, strings, math, bits, checksums, encoding, RNG, sorting, and timing
+- **BITRAF** for bit-level operations and compression
+- **ZIPRAF** for archiving and data compression
+- **RAFSTORE** for storage management (memory pools, ring buffers, KV store, LRU cache)
+- **TOROID** for toroidal topology structures and spatial operations
+- **Hardware detection** with CPU feature identification
+
+**Documentation:** See [rafaelia-baremetal/README.md](rafaelia-baremetal/README.md) for details
+
+**Build with baremetal support:**
+```bash
+cmake -B build -DRAFAELIA_BAREMETAL=ON
+cmake --build build --config Release
+```
+
+---
+
 ## Recent API changes
 
 - [Changelog for `libllama` API](https://github.com/ggml-org/llama.cpp/issues/9289)
