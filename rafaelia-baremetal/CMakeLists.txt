@@ -9,9 +9,22 @@ project(rafaelia-baremetal C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Option for native CPU optimization (off by default for portability)
+option(RAFAELIA_NATIVE_OPTIMIZE "Enable native CPU optimizations (-march=native)" OFF)
+
 # Optimization flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native")
+
+# Release flags: portable by default, native optimization if requested
+if(RAFAELIA_NATIVE_OPTIMIZE)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native -mtune=native")
+    message(STATUS "Rafaelia: Building with native CPU optimizations (non-portable)")
+else()
+    # Use portable flags that work across different CPUs of the same architecture
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+    message(STATUS "Rafaelia: Building with portable optimizations")
+endif()
+
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
 
 # Option to build the baremetal module

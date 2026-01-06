@@ -73,7 +73,7 @@ See [docs/42_TOOLS.md](docs/42_TOOLS.md) for detailed documentation of all tools
 The baremetal module can be built independently or as part of the llama.cpp project:
 
 ```bash
-# Build with baremetal support
+# Build with baremetal support (portable by default)
 cmake -B build -DRAFAELIA_BAREMETAL=ON
 cmake --build build --config Release
 
@@ -86,6 +86,68 @@ cmake --build build --config Release
 # Run comprehensive integration examples
 ./build/bin/rafaelia-integration
 ```
+
+### Build Options
+
+#### Portable vs Native Optimization
+
+By default, the module builds with portable optimizations that work across different CPUs of the same architecture family. For maximum performance on a specific machine, you can enable native CPU optimizations:
+
+```bash
+# Portable build (default - recommended for distribution)
+cmake -B build -DRAFAELIA_BAREMETAL=ON
+cmake --build build --config Release
+
+# Native optimization build (maximum performance, non-portable)
+cmake -B build -DRAFAELIA_BAREMETAL=ON -DRAFAELIA_NATIVE_OPTIMIZE=ON
+cmake --build build --config Release
+```
+
+**Important**: Native optimization uses `-march=native` and `-mtune=native` flags, which optimize for the build machine's CPU but may not run on other CPUs. Use portable builds for:
+- Cross-compilation
+- Container images
+- Binary distribution
+- Academic/research environments with diverse hardware
+
+## Platform Compatibility
+
+The Rafaelia Baremetal Module is designed to be highly portable across different platforms and architectures:
+
+### Supported Architectures
+
+- **x86**: 32-bit x86 (i386, i686)
+- **x86-64**: 64-bit x86 (AMD64, Intel 64)
+- **ARM**: 32-bit ARM (ARMv7, ARMv8 32-bit mode)
+- **ARM64**: 64-bit ARM (AArch64, Apple Silicon)
+- **RISC-V**: 32-bit and 64-bit RISC-V
+- **MIPS**: MIPS architecture
+- **PowerPC**: PowerPC architecture
+
+### Supported Operating Systems
+
+- **Linux**: All major distributions (Ubuntu, Debian, Fedora, RHEL, Arch, etc.)
+- **macOS**: Intel and Apple Silicon
+- **Windows**: Windows 7+ (MSVC, MinGW, Cygwin)
+- **BSD**: FreeBSD, NetBSD, OpenBSD
+- **Unix-like**: Any POSIX-compliant system
+
+### Hardware Detection
+
+The module includes comprehensive hardware detection that automatically identifies:
+- CPU architecture and features (SSE, AVX, NEON, SVE, etc.)
+- Number of physical CPU cores
+- Cache line sizes
+- Platform-specific optimizations
+
+Hardware detection works correctly on all supported platforms and gracefully falls back to safe defaults on unknown systems.
+
+### Compatibility Features
+
+1. **No External Dependencies**: Pure C11 implementation with only standard library
+2. **Portable Compilation**: Default build works across different CPUs of same architecture
+3. **Cross-Platform APIs**: Consistent API across all platforms
+4. **Standard Headers**: Uses only `stdint.h`, `unistd.h` (POSIX), `windows.h` (Windows)
+5. **Fallback Mechanisms**: Safe defaults when hardware detection unavailable
 
 ## Usage
 
