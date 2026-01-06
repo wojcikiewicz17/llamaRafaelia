@@ -95,6 +95,7 @@ int test_vector_operations(void) {
     /* Test dot product: 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32 */
     raf_scalar dot = raf_vector_dot(v1, v2);
     assert(dot == 32.0f);
+    (void)dot; /* Used in assert */
     
     raf_vector_destroy(v1);
     raf_vector_destroy(v2);
@@ -151,6 +152,7 @@ int test_toroid_operations(void) {
     
     float val = raf_toroid_2d_get(toroid, 9, 9);
     assert(val == 2.0f);
+    (void)val; /* Used in assert */
     
     /* Test neighbors */
     raf_toroid_2d_set(toroid, 5, 5, 10.0f);
@@ -181,6 +183,7 @@ int test_rafstore_operations(void) {
     assert(result == 0);
     assert(*(int*)retrieved == 42);
     assert(size == sizeof(int));
+    (void)result; /* Used in assert */
     
     /* Test ring buffer */
     raf_ring_buffer *ring = raf_ring_create(8);
@@ -208,6 +211,7 @@ int test_zipraf_operations(void) {
     uint8_t data[] = "Hello, World!";
     uint32_t crc = raf_zipraf_crc32(data, strlen((char*)data));
     assert(crc != 0);
+    (void)crc; /* Used in assert */
     
     /* Test archive */
     raf_zipraf_archive *archive = raf_zipraf_create();
@@ -216,6 +220,7 @@ int test_zipraf_operations(void) {
     uint8_t test_data[] = {1, 2, 3, 4, 5};
     int result = raf_zipraf_add_data(archive, "test.dat", test_data, 5);
     assert(result == 0);
+    (void)result; /* Used in assert */
     
     uint8_t *output;
     size_t size;

@@ -305,7 +305,9 @@ uint32_t raf_murmur3_32(const void *key, size_t len, uint32_t seed) {
     uint32_t k = 0;
     switch (len & 3) {
         case 3: k ^= data[nblocks*4+2] << 16;
+                /* fallthrough */
         case 2: k ^= data[nblocks*4+1] << 8;
+                /* fallthrough */
         case 1: k ^= data[nblocks*4];
                 k *= c1;
                 k = (k << 15) | (k >> 17);
