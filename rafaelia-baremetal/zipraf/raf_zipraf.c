@@ -138,12 +138,8 @@ int raf_zipraf_extract_data(const raf_zipraf_archive *archive, const char *name,
 int raf_zipraf_list_entries(const raf_zipraf_archive *archive) {
     if (!archive) return -1;
     
-    for (uint32_t i = 0; i < archive->num_entries; i++) {
-        /* Would print entry information in a real implementation */
-        /* For now, just count entries */
-        (void)i; /* Suppress unused variable warning */
-    }
-    
+    /* Would print entry information in a real implementation */
+    /* For now, just return count without iteration */
     return archive->num_entries;
 }
 

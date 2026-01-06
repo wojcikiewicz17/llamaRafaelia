@@ -300,7 +300,10 @@ void scenario_performance_critical_pipeline(void) {
            (unsigned long long)(end_time - start_time));
     
     /* Cleanup */
-    (void)obj1; (void)obj2; (void)obj3; /* Pool allocations freed with pool */
+    /* Pool allocations are automatically freed with pool */
+    (void)obj1;
+    (void)obj2;
+    (void)obj3;
     raf_ring_destroy(ring);
     raf_pool_destroy(pool);
 }
