@@ -202,6 +202,13 @@ if (LLAMA_BUILD_COMMON)
     add_subdirectory(common)
 endif()
 
+# Rafaelia Baremetal Module
+option(RAFAELIA_BAREMETAL "Build Rafaelia Baremetal Module" ON)
+if (RAFAELIA_BAREMETAL)
+    message(STATUS "Building with Rafaelia Baremetal Module")
+    add_subdirectory(rafaelia-baremetal)
+endif()
+
 if (LLAMA_BUILD_COMMON AND LLAMA_BUILD_TESTS AND NOT CMAKE_JS_VERSION)
     include(CTest)
     add_subdirectory(tests)
