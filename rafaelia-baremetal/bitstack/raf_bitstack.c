@@ -134,7 +134,6 @@ int raf_bitstack_evaluate_flip(const raf_bitstack_state *state,
     
     /* Calculate metrics before flip */
     double entropy_before = raf_bitstack_calc_entropy(state);
-    size_t bits_before = raf_bitstack_count_bits(state, layer);
     
     /* Perform flip */
     raf_bitstack_flip_single(test_state, layer, bit_pos);
@@ -436,7 +435,6 @@ int raf_bitstack_solve_iterative(raf_bitstack_state *state,
     }
     
     size_t iteration = 0;
-    size_t best_distance = raf_bitstack_calc_distance(state, target);
     
     for (iteration = 0; iteration < max_iterations; iteration++) {
         size_t current_distance = raf_bitstack_calc_distance(state, target);
@@ -474,7 +472,6 @@ int raf_bitstack_solve_iterative(raf_bitstack_state *state,
         /* Apply best flip */
         if (best_new_distance < current_distance) {
             raf_bitstack_flip_single(state, best_layer, best_pos);
-            best_distance = best_new_distance;
         } else {
             /* No improvement - try random flip */
             size_t rand_layer = (state->state_hash >> 8) % state->num_layers;
@@ -498,12 +495,17 @@ int raf_bitstack_match_pattern(const raf_bitstack_state *state,
     size_t num_matches = 0;
     size_t qwords_per_layer = state->bits_per_layer / 64;
     
+    /* Check if pattern fits in a layer */
+    if (pattern_length > qwords_per_layer) {
+        return 0; /* Pattern too large */
+    }
+    
     for (size_t layer = 0; layer < state->num_layers && num_matches < max_matches; layer++) {
         size_t layer_offset = layer * qwords_per_layer;
         
         /* Slide pattern across layer */
-        for (size_t pos = 0; pos <= qwords_per_layer - pattern_length && 
-             num_matches < max_matches; pos++) {
+        size_t max_pos = qwords_per_layer - pattern_length + 1;
+        for (size_t pos = 0; pos < max_pos && num_matches < max_matches; pos++) {
             
             bool match = true;
             for (size_t i = 0; i < pattern_length; i++) {

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 /* Test goal function: maximize entropy */
 static double goal_maximize_entropy(const raf_bitstack_state *state) {
