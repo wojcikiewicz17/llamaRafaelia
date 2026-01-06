@@ -42,6 +42,7 @@ if(RAFAELIA_BAREMETAL)
         ${CMAKE_CURRENT_SOURCE_DIR}/rafstore
         ${CMAKE_CURRENT_SOURCE_DIR}/toroid
         ${CMAKE_CURRENT_SOURCE_DIR}/hardware
+        ${CMAKE_CURRENT_SOURCE_DIR}/rafaelia
     )
     
     # Core library sources
@@ -92,6 +93,16 @@ if(RAFAELIA_BAREMETAL)
         utils/raf_utils.h
     )
     
+    # RAFAELIA module sources (formulas and ND vectors)
+    set(RAFAELIA_MODULE_SOURCES
+        rafaelia/raf_rafaelia_vector.c
+        rafaelia/raf_rafaelia_vector.h
+        rafaelia/raf_rafaelia_core.c
+        rafaelia/raf_rafaelia_core.h
+        rafaelia/raf_rafaelia_math.c
+        rafaelia/raf_rafaelia_math.h
+    )
+    
     # Create static library combining all modules
     add_library(rafaelia-baremetal STATIC
         ${RAFAELIA_CORE_SOURCES}
@@ -102,6 +113,7 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_TOROID_SOURCES}
         ${RAFAELIA_HARDWARE_SOURCES}
         ${RAFAELIA_UTILS_SOURCES}
+        ${RAFAELIA_MODULE_SOURCES}
     )
     
     # Link math library if needed
@@ -119,6 +131,9 @@ if(RAFAELIA_BAREMETAL)
         toroid/raf_toroid.h
         hardware/raf_hardware.h
         utils/raf_utils.h
+        rafaelia/raf_rafaelia_vector.h
+        rafaelia/raf_rafaelia_core.h
+        rafaelia/raf_rafaelia_math.h
         DESTINATION include/rafaelia-baremetal
     )
     
@@ -142,6 +157,9 @@ if(RAFAELIA_BAREMETAL)
 #include \"toroid/raf_toroid.h\"
 #include \"hardware/raf_hardware.h\"
 #include \"utils/raf_utils.h\"
+#include \"rafaelia/raf_rafaelia_vector.h\"
+#include \"rafaelia/raf_rafaelia_core.h\"
+#include \"rafaelia/raf_rafaelia_math.h\"
 
 #endif /* RAFAELIA_BAREMETAL_H */
 "
@@ -164,6 +182,10 @@ if(RAFAELIA_BAREMETAL)
         # Build integration example
         add_executable(rafaelia-integration integration_example.c)
         target_link_libraries(rafaelia-integration rafaelia-baremetal)
+        
+        # Build RAFAELIA module example
+        add_executable(rafaelia-module-example rafaelia/example_rafaelia.c)
+        target_link_libraries(rafaelia-module-example rafaelia-baremetal)
     endif()
     
 endif()
