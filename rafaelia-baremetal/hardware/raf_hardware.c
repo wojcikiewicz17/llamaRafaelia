@@ -10,6 +10,14 @@
 
 #include "raf_hardware.h"
 
+/* Platform-specific headers for core detection */
+#if defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+#elif !defined(_WIN32) && !defined(_WIN64)
+    /* Unix-like systems (Linux, macOS, BSD, etc.) */
+    #include <unistd.h>
+#endif
+
 /* Architecture Detection */
 raf_arch_type raf_detect_arch(void) {
     #if defined(__x86_64__) || defined(_M_X64) || defined(__amd64__)
@@ -159,23 +167,37 @@ unsigned int raf_get_l3_cache_size(void) {
 
 /* Core Count Detection */
 int raf_get_num_cores(void) {
-    #if defined(_WIN32)
-    /* Windows */
-    /* Note: would need windows.h, using default for now */
-    return 1;
-    #elif defined(__linux__) || defined(__APPLE__)
-    /* Linux/macOS - use sysconf if available */
-    /* Note: avoiding unistd.h to prevent header conflicts */
-    /* Using syscall directly or default value */
-    return 1; /* Default - can be enhanced later */
+    #if defined(_WIN32) || defined(_WIN64)
+    /* Windows - use GetSystemInfo */
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    return (int)sysinfo.dwNumberOfProcessors;
     #else
-    /* Default to 1 if detection not available */
+    /* Unix-like systems (Linux, macOS, BSD, etc.) - use sysconf */
+    #ifdef _SC_NPROCESSORS_ONLN
+    {
+        long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+        if (nprocs > 0) {
+            return (int)nprocs;
+        }
+    }
+    #endif
+    /* Fallback to _SC_NPROCESSORS_CONF if available */
+    #ifdef _SC_NPROCESSORS_CONF
+    {
+        long nprocs_conf = sysconf(_SC_NPROCESSORS_CONF);
+        if (nprocs_conf > 0) {
+            return (int)nprocs_conf;
+        }
+    }
+    #endif
+    /* Final fallback */
     return 1;
     #endif
 }
 
 int raf_get_num_threads(void) {
     /* For now, same as num_cores */
-    /* Could detect hyperthreading in the future */
+    /* Could detect hyperthreading in the future using CPUID on x86 */
     return raf_get_num_cores();
 }

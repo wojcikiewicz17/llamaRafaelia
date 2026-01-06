@@ -28,6 +28,11 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
 - ✅ Comprehensive integration examples with 6 real-world scenarios
 - ✅ Complete API usage guide with 100+ code examples
 - ✅ All tests passing successfully
+- ✅ **NEW: Enhanced cross-platform compatibility**
+  - Portable compilation by default (works across different CPUs)
+  - Proper CPU core detection for Linux/macOS/Windows
+  - Support for x86, ARM, RISC-V, MIPS, PowerPC architectures
+  - Optional native optimization for performance builds
 
 **Documentation:**
 - [Main Documentation](rafaelia-baremetal/README.md) - Module overview and quick start
@@ -36,7 +41,12 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
 
 **Build with baremetal support:**
 ```bash
+# Portable build (recommended - works across different CPUs)
 cmake -B build -DRAFAELIA_BAREMETAL=ON
+cmake --build build --config Release
+
+# For maximum performance on local machine (non-portable)
+cmake -B build -DRAFAELIA_BAREMETAL=ON -DRAFAELIA_NATIVE_OPTIMIZE=ON
 cmake --build build --config Release
 
 # Run tests and examples
