@@ -37,6 +37,23 @@ This module contains original implementations by Rafael Melo Reis and is also pr
 - **rafstore/**: Storage management and data structures
 - **toroid/**: Toroidal topology implementations
 - **hardware/**: Hardware detection and register access
+- **utils/**: Collection of 42 specialized utility tools
+
+### The 42 Utility Tools
+
+The utils module provides 42 specialized baremetal tools organized into categories:
+
+1. **Memory Operations (Tools 1-5)**: Secure comparison, zeroing, safe copy, swap, pattern fill
+2. **String Operations (Tools 6-10)**: Safe length, copy, concatenation, case-insensitive compare, tokenization
+3. **Math Operations (Tools 11-15)**: Integer sqrt, power, GCD, LCM, modular exponentiation
+4. **Bit Operations (Tools 16-20)**: Popcount, find first/last set, rotate left/right
+5. **Checksums/Hashing (Tools 21-25)**: Fletcher-16/32, Adler-32, MurmurHash3, FNV-1a
+6. **Encoding/Decoding (Tools 26-30)**: Base64, hexadecimal, URL encoding
+7. **Random Generation (Tools 31-35)**: PRNG initialization, generation, range, float, bytes
+8. **Sorting/Searching (Tools 36-40)**: Quicksort, binary search, insertion sort, min/max
+9. **Time/Profiling (Tools 41-42)**: High-resolution timestamp, microsecond delay
+
+See [docs/42_TOOLS.md](docs/42_TOOLS.md) for detailed documentation of all tools.
 
 ## Building
 

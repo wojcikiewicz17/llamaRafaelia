@@ -66,6 +66,12 @@ if(RAFAELIA_BAREMETAL)
         hardware/raf_hardware.h
     )
     
+    # Utility tools sources (42 tools)
+    set(RAFAELIA_UTILS_SOURCES
+        utils/raf_utils.c
+        utils/raf_utils.h
+    )
+    
     # Create static library combining all modules
     add_library(rafaelia-baremetal STATIC
         ${RAFAELIA_CORE_SOURCES}
@@ -74,6 +80,7 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_RAFSTORE_SOURCES}
         ${RAFAELIA_TOROID_SOURCES}
         ${RAFAELIA_HARDWARE_SOURCES}
+        ${RAFAELIA_UTILS_SOURCES}
     )
     
     # Link math library if needed
@@ -89,6 +96,7 @@ if(RAFAELIA_BAREMETAL)
         rafstore/raf_rafstore.h
         toroid/raf_toroid.h
         hardware/raf_hardware.h
+        utils/raf_utils.h
         DESTINATION include/rafaelia-baremetal
     )
     
@@ -110,6 +118,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"rafstore/raf_rafstore.h\"
 #include \"toroid/raf_toroid.h\"
 #include \"hardware/raf_hardware.h\"
+#include \"utils/raf_utils.h\"
 
 #endif /* RAFAELIA_BAREMETAL_H */
 "
