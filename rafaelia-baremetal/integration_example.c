@@ -135,7 +135,7 @@ void scenario_spatial_data_processing(void) {
     
     /* Create 2D toroidal grid for game of life or heat diffusion */
     uint32_t width = 20, height = 20;
-    raf_toroid_2d *grid = raf_toroid_2d_create(width, height);
+    raf_toroid_2d *grid_current = raf_toroid_2d_create(width, height);
     
     /* Initialize with random pattern using utils PRNG */
     raf_prng prng;
@@ -144,27 +144,27 @@ void scenario_spatial_data_processing(void) {
     for (uint32_t y = 0; y < height; y++) {
         for (uint32_t x = 0; x < width; x++) {
             float value = raf_prng_float(&prng);
-            raf_toroid_2d_set(grid, x, y, value);
+            raf_toroid_2d_set(grid_current, x, y, value);
         }
     }
     
     printf("Initialized %dx%d toroidal grid\n", width, height);
     
     /* Perform diffusion simulation (heat spread) - create destination grid */
-    raf_toroid_2d *grid_dest = raf_toroid_2d_create(width, height);
+    raf_toroid_2d *grid_next = raf_toroid_2d_create(width, height);
     for (int iter = 0; iter < 5; iter++) {
-        raf_toroid_2d_diffuse(grid, grid_dest, 0.25f);
+        raf_toroid_2d_diffuse(grid_current, grid_next, 0.25f);
         /* Swap grids for next iteration */
-        raf_toroid_2d *temp = grid;
-        grid = grid_dest;
-        grid_dest = temp;
+        raf_toroid_2d *temp = grid_current;
+        grid_current = grid_next;
+        grid_next = temp;
     }
-    raf_toroid_2d_destroy(grid_dest);
+    raf_toroid_2d_destroy(grid_next);
     
     /* Calculate statistics using vector operations */
     raf_vector *data_vec = raf_vector_create(width * height);
     for (uint32_t i = 0; i < width * height; i++) {
-        data_vec->data[i] = grid->data[i];
+        data_vec->data[i] = grid_current->data[i];
     }
     
     /* Find min/max manually */
@@ -178,11 +178,11 @@ void scenario_spatial_data_processing(void) {
     printf("After diffusion - Min: %.4f, Max: %.4f\n", min_val, max_val);
     
     /* Test toroidal distance */
-    float dist = raf_toroid_2d_distance(grid, 0, 0, width-1, height-1);
+    float dist = raf_toroid_2d_distance(grid_current, 0, 0, width-1, height-1);
     printf("Toroidal distance corner-to-corner: %.2f\n", dist);
     
     raf_vector_destroy(data_vec);
-    raf_toroid_2d_destroy(grid);
+    raf_toroid_2d_destroy(grid_current);
 }
 
 /**
@@ -208,11 +208,11 @@ void scenario_nonlinear_logic_and_state(void) {
     /* Create KV store for state snapshots */
     raf_kv_store *store = raf_kv_create(16);
     
-    /* Save state snapshot */
+    /* Save state snapshot (store POD value only) */
     char snapshot_key[32];
     snprintf(snapshot_key, sizeof(snapshot_key), "state_snapshot_%llu", 
              (unsigned long long)initial_hash);
-    raf_kv_set(store, snapshot_key, state, sizeof(*state));
+    raf_kv_set(store, snapshot_key, &initial_hash, sizeof(initial_hash));
     
     /* Perform single-flip operation */
     raf_bitstack_flip_single(state, 1, 32);
@@ -261,7 +261,7 @@ void scenario_performance_critical_pipeline(void) {
     
     /* Secure comparison (timing-attack resistant) */
     int are_equal = raf_memcmp_secure(sensitive_data1, sensitive_data2, 32);
-    printf("Secure comparison result: %s\n", are_equal ? "Equal" : "Different");
+    printf("Secure comparison result: %s\n", are_equal == 0 ? "Equal" : "Different");
     
     /* Securely zero sensitive data */
     raf_memzero_secure(sensitive_data1, sizeof(sensitive_data1));
