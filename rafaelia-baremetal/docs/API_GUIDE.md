@@ -346,7 +346,7 @@ void archive_example(void) {
     uint8_t *extracted;
     size_t extracted_len;
     if (raf_zipraf_extract_data(archive, "message.txt", &extracted, &extracted_len) == 0) {
-        printf("Extracted: %s (%zu bytes)\n", extracted, extracted_len);
+        printf("Extracted: %.*s (%zu bytes)\n", (int) extracted_len, (const char *) extracted, extracted_len);
         free(extracted);
     }
     
@@ -539,9 +539,9 @@ void convolution_example(void) {
     
     // Define 3x3 kernel (e.g., Gaussian blur)
     float kernel[9] = {
-        1/16.0f, 2/16.0f, 1/16.0f,
-        2/16.0f, 4/16.0f, 2/16.0f,
-        1/16.0f, 2/16.0f, 1/16.0f
+        1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f,
+        2.0f/16.0f, 4.0f/16.0f, 2.0f/16.0f,
+        1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f
     };
     
     // Apply convolution
