@@ -13,7 +13,8 @@
 /* Platform-specific headers for core detection */
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
-#elif defined(__linux__) || defined(__APPLE__) || defined(__unix__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#elif !defined(_WIN32) && !defined(_WIN64)
+    /* Unix-like systems (Linux, macOS, BSD, etc.) */
     #include <unistd.h>
 #endif
 
@@ -171,24 +172,26 @@ int raf_get_num_cores(void) {
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     return (int)sysinfo.dwNumberOfProcessors;
-    #elif defined(__linux__) || defined(__APPLE__) || defined(__unix__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-    /* POSIX systems - use sysconf */
+    #else
+    /* Unix-like systems (Linux, macOS, BSD, etc.) - use sysconf */
     #ifdef _SC_NPROCESSORS_ONLN
-    long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
-    if (nprocs > 0) {
-        return (int)nprocs;
+    {
+        long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+        if (nprocs > 0) {
+            return (int)nprocs;
+        }
     }
     #endif
     /* Fallback to _SC_NPROCESSORS_CONF if available */
     #ifdef _SC_NPROCESSORS_CONF
-    long nprocs_conf = sysconf(_SC_NPROCESSORS_CONF);
-    if (nprocs_conf > 0) {
-        return (int)nprocs_conf;
+    {
+        long nprocs_conf = sysconf(_SC_NPROCESSORS_CONF);
+        if (nprocs_conf > 0) {
+            return (int)nprocs_conf;
+        }
     }
     #endif
-    return 1; /* Fallback */
-    #else
-    /* Unknown platform - default to 1 */
+    /* Final fallback */
     return 1;
     #endif
 }
