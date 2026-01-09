@@ -38,6 +38,8 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
 - [Main Documentation](rafaelia-baremetal/README.md) - Module overview and quick start
 - [Complete API Guide](rafaelia-baremetal/docs/API_GUIDE.md) - Comprehensive examples for all modules
 - [42 Tools Reference](rafaelia-baremetal/docs/42_TOOLS.md) - Utility tools documentation
+- **[Performance Boosters Guide](docs/BOOSTERS.md) - Detailed guide on backends, types, and benchmarks** 🚀
+- **[Guia de Boosters (Português)](docs/BOOSTERS_PT.md) - Guia completo em português sobre aceleradores** 🇧🇷
 
 **Build with baremetal support:**
 ```bash
@@ -313,6 +315,10 @@ Instructions for adding support for new models: [HOWTO-add-model.md](docs/develo
 
 ## Supported backends
 
+**📖 For detailed information about each backend, performance comparisons, and benchmarks:**
+- **English:** [Performance Boosters Guide](docs/BOOSTERS.md)
+- **Português:** [Guia de Boosters](docs/BOOSTERS_PT.md) 🇧🇷
+
 | Backend | Target devices |
 | --- | --- |
 | [Metal](docs/build.md#metal-build) | Apple Silicon |
@@ -586,6 +592,7 @@ To learn more about model quantization, [read this documentation](tools/quantize
 - [main (cli)](tools/main/README.md)
 - [server](tools/server/README.md)
 - [GBNF grammars](grammars/README.md)
+- **[Performance Boosters (Backends)](docs/BOOSTERS.md)** - Comprehensive guide to acceleration backends
 
 #### Development documentation
 
@@ -593,6 +600,7 @@ To learn more about model quantization, [read this documentation](tools/quantize
 - [Running on Docker](docs/docker.md)
 - [Build on Android](docs/android.md)
 - [Performance troubleshooting](docs/development/token_generation_performance_tips.md)
+- **[Performance Boosters & Benchmarks](docs/BOOSTERS.md)** - Detailed backend types and performance comparisons
 - [GGML tips & tricks](https://github.com/ggml-org/llama.cpp/wiki/GGML-Tips-&-Tricks)
 
 #### Seminal papers and background on the models
