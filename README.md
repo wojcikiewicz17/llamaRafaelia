@@ -39,6 +39,7 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
 - [Complete API Guide](rafaelia-baremetal/docs/API_GUIDE.md) - Comprehensive examples for all modules
 - [42 Tools Reference](rafaelia-baremetal/docs/42_TOOLS.md) - Utility tools documentation
 - **[Performance Boosters Guide](docs/BOOSTERS.md) - Detailed guide on backends, types, and benchmarks** 🚀
+- **[Guia de Boosters (Português)](docs/BOOSTERS_PT.md) - Guia completo em português sobre aceleradores** 🇧🇷
 
 **Build with baremetal support:**
 ```bash
@@ -314,7 +315,9 @@ Instructions for adding support for new models: [HOWTO-add-model.md](docs/develo
 
 ## Supported backends
 
-**📖 For detailed information about each backend, performance comparisons, and benchmarks, see the [Performance Boosters Guide](docs/BOOSTERS.md)**
+**📖 For detailed information about each backend, performance comparisons, and benchmarks:**
+- **English:** [Performance Boosters Guide](docs/BOOSTERS.md)
+- **Português:** [Guia de Boosters](docs/BOOSTERS_PT.md) 🇧🇷
 
 | Backend | Target devices |
 | --- | --- |
