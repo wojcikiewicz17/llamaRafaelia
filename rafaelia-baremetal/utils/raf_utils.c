@@ -431,6 +431,7 @@ size_t raf_url_encode(const char *src, char *dst, size_t dst_len) {
 /* ===== Random Number Generation (Tools 31-35) ===== */
 
 void raf_prng_init(raf_prng *prng, uint64_t seed) {
+    if (!prng) return;
     prng->state[0] = seed;
     prng->state[1] = seed ^ 0x123456789ABCDEF0ULL;
     prng->state[2] = seed + 0xFEDCBA9876543210ULL;
@@ -438,6 +439,7 @@ void raf_prng_init(raf_prng *prng, uint64_t seed) {
 }
 
 uint64_t raf_prng_next(raf_prng *prng) {
+    if (!prng) return 0;
     /* xoshiro256** algorithm */
     uint64_t result = raf_rotl(prng->state[1] * 5, 7) * 9;
     uint64_t t = prng->state[1] << 17;

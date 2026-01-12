@@ -95,6 +95,15 @@ raf_vec3d* raf_vec3d_create(uint32_t width, uint32_t height, uint32_t depth) {
     raf_vec3d *vec = (raf_vec3d*)malloc(sizeof(raf_vec3d));
     if (!vec) return NULL;
     
+    /* Check for potential overflow in size calculation */
+    if (width > 0 && height > 0 && depth > 0) {
+        if (width > UINT32_MAX / height || 
+            (width * height) > UINT32_MAX / depth) {
+            free(vec);
+            return NULL;  /* Would overflow */
+        }
+    }
+    
     vec->dim[0] = width;
     vec->dim[1] = height;
     vec->dim[2] = depth;
@@ -375,11 +384,26 @@ raf_neighbor_config* raf_neighbor_config_create(uint32_t ndim, uint32_t connecti
     /* For full connectivity: 3^ndim - 1 (all adjacent cells including diagonals) */
     uint32_t total_neighbors = 1;
     for (uint32_t i = 0; i < ndim; i++) {
+        /* Check for overflow before multiplying */
+        if (total_neighbors > UINT32_MAX / 3) {
+            free(config);
+            return NULL;  /* Would overflow */
+        }
         total_neighbors *= 3;
     }
     total_neighbors -= 1;  /* Exclude center */
     
     config->count = total_neighbors;
+    
+    /* Check for overflow in offset allocation size */
+    if (total_neighbors > 0 && ndim > 0) {
+        if (total_neighbors > UINT32_MAX / ndim ||
+            (total_neighbors * ndim) > UINT32_MAX / sizeof(int32_t)) {
+            free(config);
+            return NULL;  /* Would overflow */
+        }
+    }
+    
     config->offsets = (int32_t*)malloc(total_neighbors * ndim * sizeof(int32_t));
     if (!config->offsets) {
         free(config);
