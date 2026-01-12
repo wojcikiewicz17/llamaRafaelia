@@ -58,7 +58,7 @@ raf_scalar_t raf_compute_toroidal_integral(const raf_cycle_state *cycle,
     raf_scalar_t step = (phi * pi * delta) / (raf_scalar_t)num_samples;
     
     for (uint32_t i = 0; i < num_samples; i++) {
-        raf_scalar_t t = (raf_scalar_t)i * step;
+        /* Integrand based on cycle state components */
         raf_scalar_t integrand = cycle->psi * cycle->chi * cycle->rho * 
                                  cycle->sigma * cycle->omega;
         integrand = powf(integrand, RAF_SQRT3_2);

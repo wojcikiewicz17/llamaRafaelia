@@ -19,15 +19,38 @@ static uint32_t calc_total_size(const uint32_t *dim, uint32_t ndim) {
     return total;
 }
 
-/* Helper: Calculate flat index from multi-dimensional indices */
-static uint32_t calc_flat_index(const uint32_t *indices, const uint32_t *dim, uint32_t ndim) {
+/* Helper: Calculate flat index from multi-dimensional indices 
+ * Returns true if calculation succeeds, false if overflow would occur.
+ * Result is stored in out_index parameter.
+ */
+static bool calc_flat_index(const uint32_t *indices, const uint32_t *dim, uint32_t ndim, uint32_t *out_index) {
+    if (!indices || !dim || !out_index) return false;
+    
     uint32_t flat_idx = 0;
     uint32_t multiplier = 1;
     for (int32_t i = (int32_t)ndim - 1; i >= 0; i--) {
-        flat_idx += indices[i] * multiplier;
+        /* Check for multiplication overflow */
+        if (indices[i] > 0 && multiplier > UINT32_MAX / indices[i]) {
+            return false;  /* Overflow in multiplication */
+        }
+        
+        uint32_t term = indices[i] * multiplier;
+        
+        /* Check for addition overflow */
+        if (term > 0 && flat_idx > UINT32_MAX - term) {
+            return false;  /* Overflow in addition */
+        }
+        
+        flat_idx += term;
+        
+        /* Check for overflow before multiplying for next iteration */
+        if (i > 0 && dim[i] > 0 && multiplier > UINT32_MAX / dim[i]) {
+            return false;  /* Overflow in next multiplier */
+        }
         multiplier *= dim[i];
     }
-    return flat_idx;
+    *out_index = flat_idx;
+    return true;
 }
 
 /* Toroidal wrapping for 1D */
@@ -94,6 +117,15 @@ void raf_vec2d_destroy(raf_vec2d *vec) {
 raf_vec3d* raf_vec3d_create(uint32_t width, uint32_t height, uint32_t depth) {
     raf_vec3d *vec = (raf_vec3d*)malloc(sizeof(raf_vec3d));
     if (!vec) return NULL;
+    
+    /* Check for potential overflow in size calculation */
+    if (width > 0 && height > 0 && depth > 0) {
+        if (width > UINT32_MAX / height || 
+            (width * height) > UINT32_MAX / depth) {
+            free(vec);
+            return NULL;  /* Would overflow */
+        }
+    }
     
     vec->dim[0] = width;
     vec->dim[1] = height;
@@ -254,15 +286,21 @@ void raf_vecnd_destroy(raf_vecnd *vec) {
 
 /* Get/Set operations */
 raf_scalar_t raf_vecnd_get(const raf_vecnd *vec, const uint32_t *indices) {
-    if (!vec || !vec->data) return 0.0f;
-    uint32_t flat_idx = calc_flat_index(indices, vec->dim, vec->dimensions);
+    if (!vec || !vec->data || !indices) return 0.0f;
+    uint32_t flat_idx;
+    if (!calc_flat_index(indices, vec->dim, vec->dimensions, &flat_idx)) {
+        return 0.0f;  /* Overflow in index calculation */
+    }
     if (flat_idx >= vec->total_size) return 0.0f;
     return vec->data[flat_idx];
 }
 
 void raf_vecnd_set(raf_vecnd *vec, const uint32_t *indices, raf_scalar_t value) {
-    if (!vec || !vec->data) return;
-    uint32_t flat_idx = calc_flat_index(indices, vec->dim, vec->dimensions);
+    if (!vec || !vec->data || !indices) return;
+    uint32_t flat_idx;
+    if (!calc_flat_index(indices, vec->dim, vec->dimensions, &flat_idx)) {
+        return;  /* Overflow in index calculation */
+    }
     if (flat_idx >= vec->total_size) return;
     vec->data[flat_idx] = value;
 }
@@ -362,6 +400,10 @@ raf_scalar_t raf_vecnd_max(const raf_vecnd *vec) {
 raf_neighbor_config* raf_neighbor_config_create(uint32_t ndim, uint32_t connectivity) {
     if (ndim < 1 || ndim > 7) return NULL;
     
+    /* Note: connectivity parameter reserved for future use (partial connectivity support) */
+    /* Currently only full connectivity (3^ndim - 1) is implemented */
+    (void)connectivity;  /* Mark as intentionally unused */
+    
     raf_neighbor_config *config = (raf_neighbor_config*)malloc(sizeof(raf_neighbor_config));
     if (!config) return NULL;
     
@@ -371,12 +413,37 @@ raf_neighbor_config* raf_neighbor_config_create(uint32_t ndim, uint32_t connecti
     /* For full connectivity: 3^ndim - 1 (all adjacent cells including diagonals) */
     uint32_t total_neighbors = 1;
     for (uint32_t i = 0; i < ndim; i++) {
+        /* Check for overflow before multiplying */
+        if (total_neighbors > UINT32_MAX / 3) {
+            free(config);
+            return NULL;  /* Would overflow */
+        }
         total_neighbors *= 3;
     }
     total_neighbors -= 1;  /* Exclude center */
     
     config->count = total_neighbors;
-    config->offsets = (int32_t*)malloc(total_neighbors * ndim * sizeof(int32_t));
+    
+    /* Check for overflow in offset allocation size */
+    /* We need to allocate: total_neighbors * ndim * sizeof(int32_t) bytes */
+    size_t total_elements = 0;
+    if (total_neighbors > 0 && ndim > 0) {
+        /* Check if total_neighbors * ndim would overflow size_t */
+        if ((size_t)total_neighbors > SIZE_MAX / ndim) {
+            free(config);
+            return NULL;  /* Would overflow */
+        }
+        total_elements = (size_t)total_neighbors * ndim;
+        
+        /* Check if total_elements * sizeof(int32_t) would overflow size_t */
+        if (total_elements > SIZE_MAX / sizeof(int32_t)) {
+            free(config);
+            return NULL;  /* Would overflow */
+        }
+    }
+    
+    /* Use validated size for allocation */
+    config->offsets = (int32_t*)malloc(total_elements * sizeof(int32_t));
     if (!config->offsets) {
         free(config);
         return NULL;
