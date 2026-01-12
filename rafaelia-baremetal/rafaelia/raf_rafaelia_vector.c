@@ -20,34 +20,37 @@ static uint32_t calc_total_size(const uint32_t *dim, uint32_t ndim) {
 }
 
 /* Helper: Calculate flat index from multi-dimensional indices 
- * Returns UINT32_MAX if overflow would occur during calculation.
- * Callers should check if result >= vector total_size before using.
+ * Returns true if calculation succeeds, false if overflow would occur.
+ * Result is stored in out_index parameter.
  */
-static uint32_t calc_flat_index(const uint32_t *indices, const uint32_t *dim, uint32_t ndim) {
+static bool calc_flat_index(const uint32_t *indices, const uint32_t *dim, uint32_t ndim, uint32_t *out_index) {
+    if (!indices || !dim || !out_index) return false;
+    
     uint32_t flat_idx = 0;
     uint32_t multiplier = 1;
     for (int32_t i = (int32_t)ndim - 1; i >= 0; i--) {
         /* Check for multiplication overflow */
         if (indices[i] > 0 && multiplier > UINT32_MAX / indices[i]) {
-            return UINT32_MAX;  /* Overflow in multiplication */
+            return false;  /* Overflow in multiplication */
         }
         
         uint32_t term = indices[i] * multiplier;
         
         /* Check for addition overflow */
         if (term > 0 && flat_idx > UINT32_MAX - term) {
-            return UINT32_MAX;  /* Overflow in addition */
+            return false;  /* Overflow in addition */
         }
         
         flat_idx += term;
         
         /* Check for overflow before multiplying for next iteration */
         if (i > 0 && dim[i] > 0 && multiplier > UINT32_MAX / dim[i]) {
-            return UINT32_MAX;  /* Overflow in next multiplier */
+            return false;  /* Overflow in next multiplier */
         }
         multiplier *= dim[i];
     }
-    return flat_idx;
+    *out_index = flat_idx;
+    return true;
 }
 
 /* Toroidal wrapping for 1D */
@@ -284,16 +287,20 @@ void raf_vecnd_destroy(raf_vecnd *vec) {
 /* Get/Set operations */
 raf_scalar_t raf_vecnd_get(const raf_vecnd *vec, const uint32_t *indices) {
     if (!vec || !vec->data || !indices) return 0.0f;
-    uint32_t flat_idx = calc_flat_index(indices, vec->dim, vec->dimensions);
-    /* calc_flat_index returns UINT32_MAX on overflow, which will be caught here */
+    uint32_t flat_idx;
+    if (!calc_flat_index(indices, vec->dim, vec->dimensions, &flat_idx)) {
+        return 0.0f;  /* Overflow in index calculation */
+    }
     if (flat_idx >= vec->total_size) return 0.0f;
     return vec->data[flat_idx];
 }
 
 void raf_vecnd_set(raf_vecnd *vec, const uint32_t *indices, raf_scalar_t value) {
     if (!vec || !vec->data || !indices) return;
-    uint32_t flat_idx = calc_flat_index(indices, vec->dim, vec->dimensions);
-    /* calc_flat_index returns UINT32_MAX on overflow, which will be caught here */
+    uint32_t flat_idx;
+    if (!calc_flat_index(indices, vec->dim, vec->dimensions, &flat_idx)) {
+        return;  /* Overflow in index calculation */
+    }
     if (flat_idx >= vec->total_size) return;
     vec->data[flat_idx] = value;
 }
