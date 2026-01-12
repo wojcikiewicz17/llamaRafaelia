@@ -419,22 +419,24 @@ raf_neighbor_config* raf_neighbor_config_create(uint32_t ndim, uint32_t connecti
     
     /* Check for overflow in offset allocation size */
     /* We need to allocate: total_neighbors * ndim * sizeof(int32_t) bytes */
+    size_t total_elements = 0;
     if (total_neighbors > 0 && ndim > 0) {
-        /* First check if total_neighbors * ndim would overflow */
-        if (total_neighbors > SIZE_MAX / ndim) {
+        /* Check if total_neighbors * ndim would overflow size_t */
+        if ((size_t)total_neighbors > SIZE_MAX / ndim) {
             free(config);
             return NULL;  /* Would overflow */
         }
-        size_t total_elements = (size_t)total_neighbors * ndim;
+        total_elements = (size_t)total_neighbors * ndim;
         
-        /* Then check if total_elements * sizeof(int32_t) would overflow */
+        /* Check if total_elements * sizeof(int32_t) would overflow size_t */
         if (total_elements > SIZE_MAX / sizeof(int32_t)) {
             free(config);
             return NULL;  /* Would overflow */
         }
     }
     
-    config->offsets = (int32_t*)malloc(total_neighbors * ndim * sizeof(int32_t));
+    /* Use validated size for allocation */
+    config->offsets = (int32_t*)malloc(total_elements * sizeof(int32_t));
     if (!config->offsets) {
         free(config);
         return NULL;
