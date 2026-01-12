@@ -343,6 +343,11 @@ int raf_bitraf_decode_runs(const raf_bit_run *runs, size_t num_runs,
         uint32_t run_length = runs[run_idx].run_length;
         
         for (uint32_t i = 0; i < run_length; i++) {
+            /* Check bounds before writing */
+            if (byte_pos >= output_size) {
+                return -1;  /* Buffer overflow */
+            }
+            
             if (bit_value) {
                 output[byte_pos] |= (1 << bit_pos);
             }
@@ -351,15 +356,6 @@ int raf_bitraf_decode_runs(const raf_bit_run *runs, size_t num_runs,
             if (bit_pos < 0) {
                 bit_pos = 7;
                 byte_pos++;
-                /* Check if we've gone past the output buffer */
-                if (byte_pos >= output_size) {
-                    /* Only error if we still have more data to write */
-                    bool more_in_current_run = (i + 1 < run_length);
-                    bool more_runs = (run_idx + 1 < num_runs);
-                    if (more_in_current_run || more_runs) {
-                        return -1;  /* Buffer overflow */
-                    }
-                }
             }
         }
     }

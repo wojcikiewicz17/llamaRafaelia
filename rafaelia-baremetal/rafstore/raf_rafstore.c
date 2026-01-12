@@ -232,8 +232,8 @@ int raf_kv_set(raf_kv_store *store, const char *key, const void *value, size_t v
         free(entry);
         return -1;
     }
-    /* Safe to use strcpy since we allocated exact size needed */
-    strcpy(entry->key, key);
+    /* Copy key including null terminator using explicit length */
+    memcpy(entry->key, key, key_len + 1);
     
     entry->value = malloc(value_size);
     if (!entry->value) {

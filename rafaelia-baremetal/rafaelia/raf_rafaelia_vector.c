@@ -19,7 +19,10 @@ static uint32_t calc_total_size(const uint32_t *dim, uint32_t ndim) {
     return total;
 }
 
-/* Helper: Calculate flat index from multi-dimensional indices */
+/* Helper: Calculate flat index from multi-dimensional indices 
+ * Returns UINT32_MAX if overflow would occur during calculation.
+ * Callers should check if result >= vector total_size before using.
+ */
 static uint32_t calc_flat_index(const uint32_t *indices, const uint32_t *dim, uint32_t ndim) {
     uint32_t flat_idx = 0;
     uint32_t multiplier = 1;
@@ -280,15 +283,17 @@ void raf_vecnd_destroy(raf_vecnd *vec) {
 
 /* Get/Set operations */
 raf_scalar_t raf_vecnd_get(const raf_vecnd *vec, const uint32_t *indices) {
-    if (!vec || !vec->data) return 0.0f;
+    if (!vec || !vec->data || !indices) return 0.0f;
     uint32_t flat_idx = calc_flat_index(indices, vec->dim, vec->dimensions);
+    /* calc_flat_index returns UINT32_MAX on overflow, which will be caught here */
     if (flat_idx >= vec->total_size) return 0.0f;
     return vec->data[flat_idx];
 }
 
 void raf_vecnd_set(raf_vecnd *vec, const uint32_t *indices, raf_scalar_t value) {
-    if (!vec || !vec->data) return;
+    if (!vec || !vec->data || !indices) return;
     uint32_t flat_idx = calc_flat_index(indices, vec->dim, vec->dimensions);
+    /* calc_flat_index returns UINT32_MAX on overflow, which will be caught here */
     if (flat_idx >= vec->total_size) return;
     vec->data[flat_idx] = value;
 }
@@ -413,9 +418,17 @@ raf_neighbor_config* raf_neighbor_config_create(uint32_t ndim, uint32_t connecti
     config->count = total_neighbors;
     
     /* Check for overflow in offset allocation size */
+    /* We need to allocate: total_neighbors * ndim * sizeof(int32_t) bytes */
     if (total_neighbors > 0 && ndim > 0) {
-        if (total_neighbors > UINT32_MAX / ndim ||
-            (total_neighbors * ndim) > UINT32_MAX / sizeof(int32_t)) {
+        /* First check if total_neighbors * ndim would overflow */
+        if (total_neighbors > SIZE_MAX / ndim) {
+            free(config);
+            return NULL;  /* Would overflow */
+        }
+        size_t total_elements = (size_t)total_neighbors * ndim;
+        
+        /* Then check if total_elements * sizeof(int32_t) would overflow */
+        if (total_elements > SIZE_MAX / sizeof(int32_t)) {
             free(config);
             return NULL;  /* Would overflow */
         }
