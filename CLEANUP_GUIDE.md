@@ -32,8 +32,9 @@ This document describes what files can be safely deleted from the repository to 
 - `tmp/` - Temporary directory
 
 ### Model Files (Large, Downloaded)
-- `models/*.gguf` - Model files (can be re-downloaded)
+- `models/*.gguf` - Model files (can be re-downloaded from Hugging Face)
 - `*.gguf` - GGUF model files anywhere
+- Note: Models can be re-downloaded from Hugging Face or converted using the conversion scripts included in this repository
 
 ## Files That Should NEVER Be Deleted
 
@@ -77,16 +78,16 @@ To clean up build artifacts and temporary files:
 # Cleanup script for llamaRafaelia repository
 
 echo "Cleaning build artifacts..."
-rm -rf build* 2>/dev/null
-rm -rf .ccache 2>/dev/null
-rm -rf __pycache__ 2>/dev/null
-rm -rf tmp/ 2>/dev/null
+[ -d "build" ] && rm -rf build* && echo "  Removed build directories" || echo "  No build directories found"
+[ -d ".ccache" ] && rm -rf .ccache && echo "  Removed .ccache" || echo "  No .ccache directory"
+[ -d "__pycache__" ] && rm -rf __pycache__ && echo "  Removed __pycache__" || echo "  No __pycache__ directory"
+[ -d "tmp" ] && rm -rf tmp/ && echo "  Removed tmp/" || echo "  No tmp/ directory"
 
 echo "Cleaning compiled files..."
-find . -type f \( -name "*.o" -o -name "*.a" -o -name "*.so" -o -name "*.dll" \) -delete 2>/dev/null
+find . -type f \( -name "*.o" -o -name "*.a" -o -name "*.so" -o -name "*.dll" \) -print -delete 2>/dev/null | wc -l | xargs echo "  Removed files:"
 
 echo "Cleaning temporary files..."
-find . -type f \( -name "*.tmp" -o -name "*.log" -o -name "*.swp" \) -delete 2>/dev/null
+find . -type f \( -name "*.tmp" -o -name "*.log" -o -name "*.swp" \) -print -delete 2>/dev/null | wc -l | xargs echo "  Removed files:"
 
 echo "Cleanup complete!"
 ```
