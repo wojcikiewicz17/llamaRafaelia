@@ -374,8 +374,8 @@ Create custom applications using both systems:
 
 int main(void) {
     // Load model with llama.cpp
-    auto model = llama_load_model_from_file("model.gguf", params);
-    auto ctx = llama_new_context_with_model(model, cparams);
+    llama_model * model = llama_load_model_from_file("model.gguf", params);
+    llama_context * ctx = llama_new_context_with_model(model, cparams);
     
     // Use Rafaelia for deterministic operations
     raf_cpu_features features;
