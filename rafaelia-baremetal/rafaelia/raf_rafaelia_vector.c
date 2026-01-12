@@ -24,7 +24,16 @@ static uint32_t calc_flat_index(const uint32_t *indices, const uint32_t *dim, ui
     uint32_t flat_idx = 0;
     uint32_t multiplier = 1;
     for (int32_t i = (int32_t)ndim - 1; i >= 0; i--) {
+        /* Check for potential overflow */
+        if (indices[i] > 0 && multiplier > UINT32_MAX / indices[i]) {
+            return UINT32_MAX;  /* Overflow, return max value */
+        }
         flat_idx += indices[i] * multiplier;
+        
+        /* Check for overflow before multiplying for next iteration */
+        if (i > 0 && dim[i] > 0 && multiplier > UINT32_MAX / dim[i]) {
+            return UINT32_MAX;  /* Overflow, return max value */
+        }
         multiplier *= dim[i];
     }
     return flat_idx;
