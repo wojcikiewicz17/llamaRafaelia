@@ -362,6 +362,10 @@ raf_scalar_t raf_vecnd_max(const raf_vecnd *vec) {
 raf_neighbor_config* raf_neighbor_config_create(uint32_t ndim, uint32_t connectivity) {
     if (ndim < 1 || ndim > 7) return NULL;
     
+    /* Note: connectivity parameter reserved for future use (partial connectivity support) */
+    /* Currently only full connectivity (3^ndim - 1) is implemented */
+    (void)connectivity;  /* Mark as intentionally unused */
+    
     raf_neighbor_config *config = (raf_neighbor_config*)malloc(sizeof(raf_neighbor_config));
     if (!config) return NULL;
     
