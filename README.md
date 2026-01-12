@@ -35,9 +35,11 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
   - Optional native optimization for performance builds
 
 **Documentation:**
+- **[Architecture & Design](LLAMA_RAFAELIA_DESIGN.md) - Integration architecture and design principles** 🏗️
 - [Main Documentation](rafaelia-baremetal/README.md) - Module overview and quick start
 - [Complete API Guide](rafaelia-baremetal/docs/API_GUIDE.md) - Comprehensive examples for all modules
 - [42 Tools Reference](rafaelia-baremetal/docs/42_TOOLS.md) - Utility tools documentation
+- [Implementation Summary](RAFAELIA_IMPLEMENTATION.md) - Complete implementation details
 - **[Performance Boosters Guide](docs/BOOSTERS.md) - Detailed guide on backends, types, and benchmarks** 🚀
 - **[Guia de Boosters (Português)](docs/BOOSTERS_PT.md) - Guia completo em português sobre aceleradores** 🇧🇷
 
