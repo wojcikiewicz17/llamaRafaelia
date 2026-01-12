@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Bitstream operations */
 raf_bitstream* raf_bitstream_create(size_t buffer_size) {
@@ -350,9 +351,14 @@ int raf_bitraf_decode_runs(const raf_bit_run *runs, size_t num_runs,
             if (bit_pos < 0) {
                 bit_pos = 7;
                 byte_pos++;
-                /* Only check bounds if we need to write more data */
-                if (byte_pos >= output_size && (run_idx + 1 < num_runs || i + 1 < run_length)) {
-                    return -1;
+                /* Check if we've gone past the output buffer */
+                if (byte_pos >= output_size) {
+                    /* Only error if we still have more data to write */
+                    bool more_in_current_run = (i + 1 < run_length);
+                    bool more_runs = (run_idx + 1 < num_runs);
+                    if (more_in_current_run || more_runs) {
+                        return -1;  /* Buffer overflow */
+                    }
                 }
             }
         }
