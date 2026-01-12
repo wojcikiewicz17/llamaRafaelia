@@ -11,6 +11,7 @@
 #include "raf_bitraf.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Bitstream operations */
 raf_bitstream* raf_bitstream_create(size_t buffer_size) {
@@ -175,9 +176,15 @@ raf_bitraf_compressed* raf_bitraf_compress(const uint8_t *data, size_t size) {
     raf_bitraf_compressed *compressed = (raf_bitraf_compressed*)malloc(sizeof(raf_bitraf_compressed));
     if (!compressed) return NULL;
     
+    /* Check if size fits in uint32_t */
+    if (size > UINT32_MAX) {
+        free(compressed);
+        return NULL;  /* Size too large for uint32_t */
+    }
+    
     /* Simplified compression: just copy for now, actual algorithm can be added */
-    compressed->original_size = size;
-    compressed->compressed_size = size;
+    compressed->original_size = (uint32_t)size;
+    compressed->compressed_size = (uint32_t)size;
     compressed->data = (uint8_t*)malloc(size);
     
     if (!compressed->data) {
@@ -224,7 +231,7 @@ void raf_bitraf_unpack_4bit(const uint8_t *input, size_t input_size, uint8_t *ou
 void raf_bitraf_pack_2bit(const uint8_t *input, size_t input_size, uint8_t *output) {
     for (size_t i = 0; i < input_size; i += 4) {
         uint8_t bits = 0;
-        for (int j = 0; j < 4 && (i + j) < input_size; j++) {
+        for (size_t j = 0; j < 4 && (i + j) < input_size; j++) {
             bits |= ((input[i + j] & 0x03) << (6 - j * 2));
         }
         output[i / 4] = bits;
@@ -233,7 +240,7 @@ void raf_bitraf_pack_2bit(const uint8_t *input, size_t input_size, uint8_t *outp
 
 void raf_bitraf_unpack_2bit(const uint8_t *input, size_t input_size, uint8_t *output) {
     for (size_t i = 0; i < input_size; i++) {
-        for (int j = 0; j < 4; j++) {
+        for (size_t j = 0; j < 4; j++) {
             output[i * 4 + j] = (input[i] >> (6 - j * 2)) & 0x03;
         }
     }
