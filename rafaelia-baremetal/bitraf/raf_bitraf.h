@@ -30,6 +30,7 @@ typedef struct {
 raf_bitstream* raf_bitstream_create(size_t buffer_size);
 void raf_bitstream_destroy(raf_bitstream *bs);
 void raf_bitstream_reset(raf_bitstream *bs);
+void raf_bitstream_clear(raf_bitstream *bs);
 
 /* Write operations */
 int raf_bitstream_write_bit(raf_bitstream *bs, uint8_t bit);

@@ -107,6 +107,8 @@ int test_vector_operations(void) {
 int test_bitraf_operations(void) {
     printf("Testing BITRAF operations...\n");
     
+    int result;
+    
     /* Test bitstream */
     raf_bitstream *bs = raf_bitstream_create(1024);
     assert(bs != NULL);
@@ -115,6 +117,7 @@ int test_bitraf_operations(void) {
     raf_bitstream_write_bits(bs, 0xAB, 8);
     raf_bitstream_write_bits(bs, 0x1234, 16);
     
+    /* Test reset: should rewind without clearing data */
     raf_bitstream_reset(bs);
     uint32_t val1, val2;
     raf_bitstream_read_bits(bs, &val1, 8);
@@ -122,6 +125,11 @@ int test_bitraf_operations(void) {
     
     assert(val1 == 0xAB);
     assert(val2 == 0x1234);
+    
+    /* Test clear: should zero buffer */
+    raf_bitstream_clear(bs);
+    raf_bitstream_read_bits(bs, &val1, 8);
+    assert(val1 == 0x00);
     
     /* Test bit packing */
     uint8_t input[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -133,6 +141,42 @@ int test_bitraf_operations(void) {
     
     assert(unpacked[0] == 1);
     assert(unpacked[7] == 8);
+    
+    /* Test RLE encoding/decoding */
+    uint8_t test_data[] = {0xFF, 0x00, 0xF0};  /* 8 ones, 8 zeros, 4 ones, 4 zeros */
+    raf_bit_run runs[10];
+    size_t num_runs = 10;
+    
+    result = raf_bitraf_encode_runs(test_data, 3, runs, &num_runs);
+    assert(result == 0);
+    assert(num_runs == 4);
+    assert(runs[0].bit_value == 1 && runs[0].run_length == 8);
+    assert(runs[1].bit_value == 0 && runs[1].run_length == 8);
+    assert(runs[2].bit_value == 1 && runs[2].run_length == 4);
+    assert(runs[3].bit_value == 0 && runs[3].run_length == 4);
+    
+    /* Test RLE decoding - round trip */
+    uint8_t decoded[3];
+    result = raf_bitraf_decode_runs(runs, num_runs, decoded, 3);
+    assert(result == 0);
+    assert(decoded[0] == 0xFF);
+    assert(decoded[1] == 0x00);
+    assert(decoded[2] == 0xF0);
+    
+    /* Test edge case: single bit */
+    uint8_t single_bit[] = {0x80};  /* 1 one, 7 zeros */
+    num_runs = 10;
+    result = raf_bitraf_encode_runs(single_bit, 1, runs, &num_runs);
+    assert(result == 0);
+    assert(num_runs == 2);
+    assert(runs[0].bit_value == 1 && runs[0].run_length == 1);
+    assert(runs[1].bit_value == 0 && runs[1].run_length == 7);
+    
+    /* Test overflow protection: buffer too small */
+    num_runs = 1;  /* Only space for 1 run */
+    result = raf_bitraf_encode_runs(test_data, 3, runs, &num_runs);
+    assert(result == -1);  /* Should fail */
+    (void)result; /* Suppress unused warning - result is used in asserts */
     
     raf_bitstream_destroy(bs);
     

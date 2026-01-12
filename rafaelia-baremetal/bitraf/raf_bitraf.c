@@ -41,6 +41,13 @@ void raf_bitstream_reset(raf_bitstream *bs) {
     if (bs) {
         bs->byte_pos = 0;
         bs->bit_pos = 0;
+    }
+}
+
+void raf_bitstream_clear(raf_bitstream *bs) {
+    if (bs) {
+        bs->byte_pos = 0;
+        bs->bit_pos = 0;
         memset(bs->buffer, 0, bs->buffer_size);
     }
 }
@@ -249,4 +256,97 @@ void raf_bitraf_delta_decode(const int32_t *input, size_t size, int32_t *output)
     for (size_t i = 1; i < size; i++) {
         output[i] = output[i - 1] + input[i];
     }
+}
+
+/* Run-length encoding for bit sequences */
+int raf_bitraf_encode_runs(const uint8_t *data, size_t size, 
+                            raf_bit_run *runs, size_t *num_runs) {
+    if (!data || !runs || !num_runs || size == 0) return -1;
+    
+    size_t run_count = 0;
+    size_t max_runs = *num_runs;
+    
+    /* Process each bit in the input data */
+    uint8_t current_bit = (data[0] >> 7) & 1;
+    uint32_t run_length = 0;
+    
+    for (size_t byte_idx = 0; byte_idx < size; byte_idx++) {
+        for (int bit_idx = 7; bit_idx >= 0; bit_idx--) {
+            uint8_t bit = (data[byte_idx] >> bit_idx) & 1;
+            
+            if (bit == current_bit) {
+                run_length++;
+                /* Check for overflow */
+                if (run_length == UINT32_MAX) {
+                    if (run_count >= max_runs) return -1;
+                    runs[run_count].bit_value = current_bit;
+                    runs[run_count].run_length = run_length;
+                    run_count++;
+                    run_length = 0;
+                }
+            } else {
+                /* New run starts */
+                if (run_count >= max_runs) return -1;
+                runs[run_count].bit_value = current_bit;
+                runs[run_count].run_length = run_length;
+                run_count++;
+                
+                current_bit = bit;
+                run_length = 1;
+            }
+        }
+    }
+    
+    /* Store final run */
+    if (run_length > 0) {
+        if (run_count >= max_runs) return -1;
+        runs[run_count].bit_value = current_bit;
+        runs[run_count].run_length = run_length;
+        run_count++;
+    }
+    
+    *num_runs = run_count;
+    return 0;
+}
+
+int raf_bitraf_decode_runs(const raf_bit_run *runs, size_t num_runs,
+                            uint8_t *output, size_t output_size) {
+    if (!runs || !output || num_runs == 0) return -1;
+    
+    /* Calculate total bits needed */
+    uint64_t total_bits = 0;
+    for (size_t i = 0; i < num_runs; i++) {
+        total_bits += runs[i].run_length;
+    }
+    
+    /* Check if output buffer is large enough */
+    size_t bytes_needed = (total_bits + 7) / 8;
+    if (output_size < bytes_needed) return -1;
+    
+    /* Initialize output buffer */
+    memset(output, 0, output_size);
+    
+    /* Write runs to output */
+    size_t byte_pos = 0;
+    int bit_pos = 7;
+    
+    for (size_t run_idx = 0; run_idx < num_runs; run_idx++) {
+        uint8_t bit_value = runs[run_idx].bit_value;
+        uint32_t run_length = runs[run_idx].run_length;
+        
+        for (uint32_t i = 0; i < run_length; i++) {
+            if (bit_value) {
+                output[byte_pos] |= (1 << bit_pos);
+            }
+            
+            bit_pos--;
+            if (bit_pos < 0) {
+                bit_pos = 7;
+                byte_pos++;
+                if (byte_pos >= output_size) return -1;
+            }
+        }
+    }
+    
+    return 0;
 }
