@@ -73,6 +73,8 @@ if(RAFAELIA_BAREMETAL)
     set(RAFAELIA_RAFSTORE_SOURCES
         rafstore/raf_rafstore.c
         rafstore/raf_rafstore.h
+        rafstore/raf_hd_cache.c
+        rafstore/raf_hd_cache.h
     )
     
     # TOROID library sources
@@ -128,6 +130,7 @@ if(RAFAELIA_BAREMETAL)
         bitstack/raf_bitstack.h
         zipraf/raf_zipraf.h
         rafstore/raf_rafstore.h
+        rafstore/raf_hd_cache.h
         toroid/raf_toroid.h
         hardware/raf_hardware.h
         utils/raf_utils.h
@@ -154,6 +157,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"bitstack/raf_bitstack.h\"
 #include \"zipraf/raf_zipraf.h\"
 #include \"rafstore/raf_rafstore.h\"
+#include \"rafstore/raf_hd_cache.h\"
 #include \"toroid/raf_toroid.h\"
 #include \"hardware/raf_hardware.h\"
 #include \"utils/raf_utils.h\"
@@ -186,6 +190,10 @@ if(RAFAELIA_BAREMETAL)
         # Build RAFAELIA module example
         add_executable(rafaelia-module-example rafaelia/example_rafaelia.c)
         target_link_libraries(rafaelia-module-example rafaelia-baremetal)
+        
+        # Build HD Cache example
+        add_executable(rafaelia-hd-cache-example rafstore/example_hd_cache.c)
+        target_link_libraries(rafaelia-hd-cache-example rafaelia-baremetal)
     endif()
     
 endif()
