@@ -588,8 +588,10 @@ void raf_hd_meta_destroy(raf_hd_meta_store_t *meta) {
     
     for (uint32_t i = 0; i < RAF_HD_META_BUCKETS; i++) {
         raf_hd_event_meta_t *entry = meta->buckets[i];
-        if (entry) {
+        while (entry) {
+            raf_hd_event_meta_t *next = entry->next;
             free(entry);
+            entry = next;
         }
     }
     
@@ -603,17 +605,23 @@ int raf_hd_meta_put(raf_hd_meta_store_t *meta, const raf_hd_event_meta_t *event)
     uint32_t hash = raf_hd_key_hash(&event->key);
     uint32_t bucket = hash % RAF_HD_META_BUCKETS;
     
+    raf_hd_event_meta_t *entry = meta->buckets[bucket];
+    while (entry) {
+        if (raf_hd_key_cmp(&entry->key, &event->key) == 0) {
+            raf_hd_event_meta_t *next = entry->next;
+            memcpy(entry, event, sizeof(raf_hd_event_meta_t));
+            entry->next = next;
+            return 0;
+        }
+        entry = entry->next;
+    }
+    
     /* Allocate new entry */
-    raf_hd_event_meta_t *entry = malloc(sizeof(raf_hd_event_meta_t));
+    entry = malloc(sizeof(raf_hd_event_meta_t));
     if (!entry) return -1;
     
     memcpy(entry, event, sizeof(raf_hd_event_meta_t));
-    
-    /* Insert at head of bucket (will handle as linked list in future) */
-    /* For simplicity, just store one entry per bucket (hash collisions ignored) */
-    if (meta->buckets[bucket]) {
-        free(meta->buckets[bucket]);
-    }
+    entry->next = meta->buckets[bucket];
     meta->buckets[bucket] = entry;
     meta->count++;
     
@@ -628,8 +636,11 @@ raf_hd_event_meta_t* raf_hd_meta_get(raf_hd_meta_store_t *meta,
     uint32_t bucket = hash % RAF_HD_META_BUCKETS;
     
     raf_hd_event_meta_t *entry = meta->buckets[bucket];
-    if (entry && raf_hd_key_cmp(&entry->key, key) == 0) {
-        return entry;
+    while (entry) {
+        if (raf_hd_key_cmp(&entry->key, key) == 0) {
+            return entry;
+        }
+        entry = entry->next;
     }
     
     return NULL;
@@ -868,6 +879,7 @@ uint32_t raf_hd_cache_tick(raf_hd_cache_t *cache,
         uint8_t *payload = NULL;
         uint32_t payload_len = 0;
         int from_disk = 0; /* Track if we allocated from disk */
+        int requeued = 0;
         
         /* Try cache first */
         if (raf_hd_cache_get(&cache->cache, &qentry->key, &payload, &payload_len) != 0) {
@@ -888,6 +900,7 @@ uint32_t raf_hd_cache_tick(raf_hd_cache_t *cache,
                     }
                     queue->tail = qentry;
                     queue->count++;
+                    requeued = 1;
                 } else {
                     meta->status = RAF_HD_STATUS_DROPPED;
                     raf_hd_store_write_index(&cache->store, meta);
@@ -928,14 +941,16 @@ uint32_t raf_hd_cache_tick(raf_hd_cache_t *cache,
                 queue->tail = qentry;
                 qentry->next = NULL;
                 queue->count++;
+                requeued = 1;
             } else {
                 meta->status = RAF_HD_STATUS_DROPPED;
                 raf_hd_store_write_index(&cache->store, meta);
-                free(qentry);
             }
         }
         
-        free(qentry);
+        if (!requeued) {
+            free(qentry);
+        }
         processed++;
     }
     
