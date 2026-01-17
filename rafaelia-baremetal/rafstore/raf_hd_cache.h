@@ -72,7 +72,7 @@ typedef struct {
 } raf_hd_event_key_t;
 
 /* Event Metadata */
-typedef struct {
+typedef struct raf_hd_event_meta {
     raf_hd_event_key_t key;
     uint64_t created_ns;        /* Creation timestamp (nanoseconds) */
     uint64_t ttl_ns;            /* Time to live (nanoseconds) */
@@ -82,6 +82,7 @@ typedef struct {
     uint64_t disk_off;          /* Offset in store file */
     uint32_t disk_len;          /* Length in store file (including padding) */
     raf_hd_status_t status;     /* Current status */
+    struct raf_hd_event_meta *next; /* Next entry in hash bucket */
 } raf_hd_event_meta_t;
 
 /* Block Store - Append-only storage with alignment */
