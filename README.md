@@ -10,6 +10,10 @@
 
 LLM inference in C/C++
 
+## BitStack World Model v1 + Smart Guard
+
+This fork adds a compact BitStack World Model v1 specification and a Smart Guard safety gate for llama-cli and llama-server. See `SPEC.md` for the storage model and `SMART_GUARD_TESTS.md` for test prompts and expected outcomes. The Smart Guard runs before generation and returns short road-sign style warnings for WARN/BLOCK cases, without operational steps.
+
 ## Rafaelia Baremetal Module
 
 This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependency-free C library for baremetal computing with deterministic operations. The module provides:

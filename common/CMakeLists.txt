@@ -71,6 +71,10 @@ add_library(${TARGET} STATIC
     sampling.h
     speculative.cpp
     speculative.h
+    smart_guard.cpp
+    smart_guard.h
+    synonym_normalizer.cpp
+    synonym_normalizer.h
     )
 
 if (BUILD_SHARED_LIBS)

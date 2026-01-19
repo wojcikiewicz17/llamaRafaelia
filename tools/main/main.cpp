@@ -3,6 +3,7 @@
 #include "console.h"
 #include "log.h"
 #include "sampling.h"
+#include "smart_guard.h"
 #include "llama.h"
 #include "chat.h"
 
@@ -301,6 +302,15 @@ int main(int argc, char ** argv) {
         } else {
             // otherwise use the prompt as is
             prompt = params.prompt;
+        }
+
+        if (!prompt.empty()) {
+            smart_guard::metadata guard_meta;
+            smart_guard::result guard_result = smart_guard::evaluate(prompt, guard_meta);
+            if (guard_result.action_taken != smart_guard::action::allow) {
+                LOG("%s\n", smart_guard::render_message(guard_result).c_str());
+                return 0;
+            }
         }
 
         if (params.interactive_first || !prompt.empty() || session_tokens.empty()) {
@@ -884,6 +894,16 @@ int main(int argc, char ** argv) {
                 if (buffer.empty()) { // Enter key on empty line lets the user pass control back
                     LOG_DBG("empty line, passing control back\n");
                 } else { // Add tokens to embd only if the input buffer is non-empty
+                    smart_guard::metadata guard_meta;
+                    smart_guard::result guard_result = smart_guard::evaluate(buffer, guard_meta);
+                    if (guard_result.action_taken != smart_guard::action::allow) {
+                        console::set_display(console::error);
+                        LOG("%s\n", smart_guard::render_message(guard_result).c_str());
+                        console::set_display(console::reset);
+                        is_interacting = true;
+                        continue;
+                    }
+
                     // append input suffix if any
                     if (!params.input_suffix.empty() && !params.conversation_mode) {
                         LOG_DBG("appending input suffix: '%s'\n", params.input_suffix.c_str());

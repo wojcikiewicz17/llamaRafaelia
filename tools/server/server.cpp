@@ -9,6 +9,7 @@
 #include "sampling.h"
 #include "speculative.h"
 #include "mtmd.h"
+#include "smart_guard.h"
 
 // mime type for sending response
 #define MIMETYPE_JSON "application/json; charset=utf-8"
@@ -4407,6 +4408,96 @@ struct server_context {
     }
 };
 
+namespace {
+
+int guard_action_rank(smart_guard::action value) {
+    switch (value) {
+        case smart_guard::action::allow:
+            return 0;
+        case smart_guard::action::warn:
+            return 1;
+        case smart_guard::action::block:
+            return 2;
+    }
+    return 0;
+}
+
+std::vector<std::string> guard_collect_prompts(const json & prompt) {
+    std::vector<std::string> prompts;
+    if (prompt.is_string()) {
+        prompts.push_back(prompt.get<std::string>());
+    } else if (prompt.is_array()) {
+        for (const auto & item : prompt) {
+            if (item.is_string()) {
+                prompts.push_back(item.get<std::string>());
+            } else {
+                prompts.push_back(item.dump());
+            }
+        }
+    } else {
+        prompts.push_back(prompt.dump());
+    }
+    return prompts;
+}
+
+smart_guard::result guard_evaluate_prompt(const json & prompt) {
+    smart_guard::metadata meta;
+    smart_guard::result worst;
+    for (const auto & text : guard_collect_prompts(prompt)) {
+        smart_guard::result current = smart_guard::evaluate(text, meta);
+        if (guard_action_rank(current.action_taken) > guard_action_rank(worst.action_taken)) {
+            worst = current;
+        }
+    }
+    return worst;
+}
+
+std::string guard_model_name(const server_context & ctx_server) {
+    if (!ctx_server.params_base.model_alias.empty()) {
+        return ctx_server.params_base.model_alias;
+    }
+    return ctx_server.params_base.model.path;
+}
+
+json guard_response_json(oaicompat_type oaicompat, const std::string & message, const smart_guard::result & guard_result, const server_context & ctx_server) {
+    const std::time_t t = std::time(0);
+    const std::string model_name = guard_model_name(ctx_server);
+
+    if (oaicompat == OAICOMPAT_TYPE_COMPLETION) {
+        return json{
+            {"choices", json::array({json{{"text", message}, {"index", 0}, {"logprobs", nullptr}, {"finish_reason", "stop"}}})},
+            {"created", t},
+            {"model", model_name},
+            {"object", "text_completion"},
+            {"usage", json{{"completion_tokens", 0}, {"prompt_tokens", 0}, {"total_tokens", 0}}},
+            {"id", gen_chatcmplid()},
+        };
+    }
+
+    if (oaicompat == OAICOMPAT_TYPE_CHAT) {
+        return json{
+            {"choices", json::array({json{{"index", 0}, {"finish_reason", "stop"}, {"message", {{"role", "assistant"}, {"content", message}}}}})},
+            {"created", t},
+            {"model", model_name},
+            {"object", "chat.completion"},
+            {"usage", json{{"completion_tokens", 0}, {"prompt_tokens", 0}, {"total_tokens", 0}}},
+            {"id", gen_chatcmplid()},
+        };
+    }
+
+    return json{
+        {"index", 0},
+        {"content", message},
+        {"stop", true},
+        {"model", model_name},
+        {"tokens_predicted", 0},
+        {"tokens_evaluated", 0},
+        {"smart_guard", json{{"action", smart_guard::action_to_string(guard_result.action_taken)}, {"risk_level", guard_result.risk_level}, {"reasons", guard_result.reasons}}},
+    };
+}
+
+} // namespace
+
 static void log_server_request(const httplib::Request & req, const httplib::Response & res) {
     // skip GH copilot requests when using default port
     if (req.path == "/v1/health") {
@@ -4989,10 +5080,31 @@ int main(int argc, char ** argv) {
 
         auto completion_id = gen_chatcmplid();
         std::unordered_set<int> task_ids;
+        bool stream = json_value(data, "stream", false);
         try {
             std::vector<server_task> tasks;
 
             const auto & prompt = data.at("prompt");
+            smart_guard::result guard_result = guard_evaluate_prompt(prompt);
+            if (guard_result.action_taken != smart_guard::action::allow) {
+                std::string message = smart_guard::render_message(guard_result);
+                json guard_json = guard_response_json(oaicompat, message, guard_result, ctx_server);
+                if (!stream) {
+                    res_ok(res, guard_json);
+                } else {
+                    const auto chunked_content_provider = [guard_json, oaicompat](size_t, httplib::DataSink & sink) {
+                        server_sent_event(sink, guard_json);
+                        if (oaicompat != OAICOMPAT_TYPE_NONE) {
+                            static const std::string ev_done = "data: [DONE]\n\n";
+                            sink.write(ev_done.data(), ev_done.size());
+                        }
+                        sink.done();
+                        return false;
+                    };
+                    res.set_chunked_content_provider("text/event-stream", chunked_content_provider);
+                }
+                return;
+            }
             // TODO: this log can become very long, put it behind a flag or think about a more compact format
             //SRV_DBG("Prompt: %s\n", prompt.is_string() ? prompt.get<std::string>().c_str() : prompt.dump(2).c_str());
 
@@ -5044,8 +5156,6 @@ int main(int argc, char ** argv) {
             res_error(res, format_error_response(e.what(), ERROR_TYPE_INVALID_REQUEST));
             return;
         }
-
-        bool stream = json_value(data, "stream", false);
 
         if (!stream) {
             ctx_server.receive_multi_results(task_ids, [&](std::vector<server_task_result_ptr> & results) {
