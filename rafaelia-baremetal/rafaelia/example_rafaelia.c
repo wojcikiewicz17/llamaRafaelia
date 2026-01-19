@@ -365,6 +365,36 @@ void example_constants() {
     print_success("Constants displayed successfully");
 }
 
+/* Example 10: Trinity 6-3-3 alignment */
+void example_trinity_alignment() {
+    print_section("10. Trinity 6-3-3 Alignment (Sacred Geometry)");
+
+    print_info("Vector alignment aligned to the trinity image (weights + blending):");
+    raf_scalar_t w_top = 6.0f;
+    raf_scalar_t w_left = 3.0f;
+    raf_scalar_t w_right = 3.0f;
+    raf_scalar_t weight_sum = w_top + w_left + w_right;
+    raf_scalar_t blend_top = w_top / weight_sum;
+    raf_scalar_t blend_left = w_left / weight_sum;
+    raf_scalar_t blend_right = w_right / weight_sum;
+
+    print_value("Weight Σ", weight_sum);
+    print_value("Blend top (6)", blend_top);
+    print_value("Blend left (3)", blend_left);
+    print_value("Blend right (3)", blend_right);
+    printf("\n");
+    printf("           6\n");
+    printf("     ESPIRITO SANTO\n");
+    printf("\n");
+    printf("  3  VERBO VIVO   VERBO VIVO  3\n");
+    printf("\n");
+    printf("           SIMBIOSE\n");
+    printf("             3\n");
+    printf("\n");
+
+    print_success("Trinity alignment displayed successfully");
+}
+
 int main(void) {
     printf("\n");
     printf(ANSI_COLOR_CYAN);
@@ -388,6 +418,7 @@ int main(void) {
     example_mathematical_formulas();
     example_blocks();
     example_constants();
+    example_trinity_alignment();
     
     print_section("Summary");
     print_success("All RAFAELIA module examples completed successfully!");
