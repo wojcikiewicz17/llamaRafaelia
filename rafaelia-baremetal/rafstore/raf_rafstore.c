@@ -17,19 +17,20 @@ raf_memory_pool* raf_pool_create(size_t size) {
     raf_memory_pool *pool = (raf_memory_pool*)malloc(sizeof(raf_memory_pool));
     if (!pool) return NULL;
     
+    pool->arena = (uint8_t*)malloc(size);
+    if (!pool->arena) {
+        free(pool);
+        return NULL;
+    }
+
     pool->blocks = (raf_memory_block*)malloc(sizeof(raf_memory_block));
     if (!pool->blocks) {
+        free(pool->arena);
         free(pool);
         return NULL;
     }
     
-    pool->blocks->data = malloc(size);
-    if (!pool->blocks->data) {
-        free(pool->blocks);
-        free(pool);
-        return NULL;
-    }
-    
+    pool->blocks->data = pool->arena;
     pool->blocks->size = size;
     pool->blocks->is_free = 1;
     pool->blocks->next = NULL;
@@ -48,11 +49,11 @@ void raf_pool_destroy(raf_memory_pool *pool) {
     raf_memory_block *current = pool->blocks;
     while (current) {
         raf_memory_block *next = current->next;
-        if (current->data) free(current->data);
         free(current);
         current = next;
     }
     
+    free(pool->arena);
     free(pool);
 }
 
@@ -63,8 +64,27 @@ void* raf_pool_alloc(raf_memory_pool *pool, size_t size) {
     raf_memory_block *current = pool->blocks;
     while (current) {
         if (current->is_free && current->size >= size) {
+            if (current->size > size) {
+                raf_memory_block *new_block = (raf_memory_block*)malloc(sizeof(raf_memory_block));
+                if (!new_block) return NULL;
+                
+                new_block->data = (uint8_t*)current->data + size;
+                new_block->size = current->size - size;
+                new_block->is_free = 1;
+                new_block->next = current->next;
+                new_block->prev = current;
+                
+                if (current->next) {
+                    current->next->prev = new_block;
+                }
+                
+                current->next = new_block;
+                current->size = size;
+                pool->block_count++;
+            }
+            
             current->is_free = 0;
-            pool->used_size += current->size;
+            pool->used_size += size;
             return current->data;
         }
         current = current->next;
@@ -82,6 +102,26 @@ void raf_pool_free(raf_memory_pool *pool, void *ptr) {
             current->is_free = 1;
             pool->used_size -= current->size;
             return;
+        }
+        current = current->next;
+    }
+}
+
+void raf_pool_defragment(raf_memory_pool *pool) {
+    if (!pool) return;
+    
+    raf_memory_block *current = pool->blocks;
+    while (current && current->next) {
+        if (current->is_free && current->next->is_free) {
+            raf_memory_block *next = current->next;
+            current->size += next->size;
+            current->next = next->next;
+            if (next->next) {
+                next->next->prev = current;
+            }
+            free(next);
+            pool->block_count--;
+            continue;
         }
         current = current->next;
     }
@@ -317,4 +357,112 @@ void raf_cache_clear(raf_lru_cache *cache) {
     
     cache->entries = NULL;
     cache->count = 0;
+}
+
+static raf_cache_entry* raf_cache_find(raf_lru_cache *cache, const char *key) {
+    if (!cache || !key) return NULL;
+    
+    raf_cache_entry *entry = cache->entries;
+    while (entry) {
+        if (strcmp(entry->key, key) == 0) return entry;
+        entry = entry->next;
+    }
+    return NULL;
+}
+
+static void raf_cache_move_to_front(raf_lru_cache *cache, raf_cache_entry *entry) {
+    if (!cache || !entry || cache->entries == entry) return;
+    
+    if (entry->prev) entry->prev->next = entry->next;
+    if (entry->next) entry->next->prev = entry->prev;
+    
+    entry->prev = NULL;
+    entry->next = cache->entries;
+    if (cache->entries) cache->entries->prev = entry;
+    cache->entries = entry;
+}
+
+static void raf_cache_evict_tail(raf_lru_cache *cache) {
+    if (!cache || !cache->entries) return;
+    
+    raf_cache_entry *tail = cache->entries;
+    while (tail->next) tail = tail->next;
+    
+    if (tail->prev) {
+        tail->prev->next = NULL;
+    } else {
+        cache->entries = NULL;
+    }
+    
+    if (tail->key) free(tail->key);
+    if (tail->data) free(tail->data);
+    free(tail);
+    cache->count--;
+}
+
+int raf_cache_put(raf_lru_cache *cache, const char *key, const void *data, size_t size) {
+    if (!cache || !key || !data || size == 0) return -1;
+    if (cache->capacity == 0) return -1;
+    
+    raf_cache_entry *entry = raf_cache_find(cache, key);
+    if (entry) {
+        void *new_data = malloc(size);
+        if (!new_data) return -1;
+        memcpy(new_data, data, size);
+        free(entry->data);
+        entry->data = new_data;
+        entry->data_size = size;
+        entry->access_count++;
+        entry->last_access = ++cache->access_counter;
+        raf_cache_move_to_front(cache, entry);
+        return 0;
+    }
+    
+    entry = (raf_cache_entry*)malloc(sizeof(raf_cache_entry));
+    if (!entry) return -1;
+    
+    size_t key_len = strlen(key);
+    entry->key = (char*)malloc(key_len + 1);
+    if (!entry->key) {
+        free(entry);
+        return -1;
+    }
+    memcpy(entry->key, key, key_len + 1);
+    
+    entry->data = malloc(size);
+    if (!entry->data) {
+        free(entry->key);
+        free(entry);
+        return -1;
+    }
+    memcpy(entry->data, data, size);
+    entry->data_size = size;
+    entry->access_count = 1;
+    entry->last_access = ++cache->access_counter;
+    entry->prev = NULL;
+    entry->next = cache->entries;
+    if (cache->entries) cache->entries->prev = entry;
+    cache->entries = entry;
+    cache->count++;
+    
+    if (cache->count > cache->capacity) {
+        raf_cache_evict_tail(cache);
+    }
+    
+    return 0;
+}
+
+int raf_cache_get(raf_lru_cache *cache, const char *key, void **data, size_t *size) {
+    if (!cache || !key || !data) return -1;
+    
+    raf_cache_entry *entry = raf_cache_find(cache, key);
+    if (!entry) return -1;
+    
+    entry->access_count++;
+    entry->last_access = ++cache->access_counter;
+    raf_cache_move_to_front(cache, entry);
+    
+    *data = entry->data;
+    if (size) *size = entry->data_size;
+    return 0;
 }
