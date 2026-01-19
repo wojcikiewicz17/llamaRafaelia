@@ -52,6 +52,7 @@ std::string normalize_ascii(const std::string & input) {
 const std::unordered_map<std::string, std::string> & synonym_table() {
     static const std::unordered_map<std::string, std::string> table = {
         {"toranja", "grapefruit"},
+        {"pomelo", "grapefruit"},
         {"grapefruit", "grapefruit"},
         {"gergelim", "sesame"},
         {"sesame", "sesame"},
