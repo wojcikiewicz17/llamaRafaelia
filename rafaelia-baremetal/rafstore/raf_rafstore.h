@@ -29,6 +29,7 @@ typedef struct raf_memory_block {
 
 /* RAFSTORE memory pool */
 typedef struct {
+    uint8_t *arena;
     raf_memory_block *blocks;
     size_t total_size;
     size_t used_size;
