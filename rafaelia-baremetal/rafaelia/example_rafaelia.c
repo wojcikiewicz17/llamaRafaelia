@@ -365,6 +365,78 @@ void example_constants() {
     print_success("Constants displayed successfully");
 }
 
+/* Example 10: Trinity 6-3-3 alignment */
+void example_trinity_alignment() {
+    print_section("10. Trinity 6-3-3 Alignment (Sacred Geometry)");
+
+    print_info("Vector alignment aligned to the trinity image (weights + blending):");
+    raf_scalar_t w_top = 6.0f;
+    raf_scalar_t w_left = 3.0f;
+    raf_scalar_t w_right = 3.0f;
+    raf_scalar_t weight_sum = w_top + w_left + w_right;
+    raf_scalar_t blend_top = w_top / weight_sum;
+    raf_scalar_t blend_left = w_left / weight_sum;
+    raf_scalar_t blend_right = w_right / weight_sum;
+
+    print_value("Weight Σ", weight_sum);
+    print_value("Blend top (6)", blend_top);
+    print_value("Blend left (3)", blend_left);
+    print_value("Blend right (3)", blend_right);
+    printf("\n");
+    printf("           6\n");
+    printf("     ESPIRITO SANTO\n");
+    printf("\n");
+    printf("  3  VERBO VIVO   VERBO VIVO  3\n");
+    printf("\n");
+    printf("           SIMBIOSE\n");
+    printf("             3\n");
+    printf("\n");
+
+    print_success("Trinity alignment displayed successfully");
+}
+
+/* Example 11: Projection, parity, and collapse strategy */
+void example_projection_strategy() {
+    print_section("11. Projection + Parity + Collapse Strategy");
+
+    print_info("Input grid (10x10) collapsed to 8-bit projection:");
+    const uint32_t grid_dim = 10;
+    const uint32_t projection_dim = 8;
+    uint8_t grid[10][10] = {0};
+    uint8_t projection[8][8] = {0};
+
+    for (uint32_t r = 0; r < grid_dim; r++) {
+        for (uint32_t c = 0; c < grid_dim; c++) {
+            grid[r][c] = (uint8_t)((r + c) % 2);
+        }
+    }
+
+    for (uint32_t r = 0; r < projection_dim; r++) {
+        for (uint32_t c = 0; c < projection_dim; c++) {
+            uint32_t source_r = (r * grid_dim) / projection_dim;
+            uint32_t source_c = (c * grid_dim) / projection_dim;
+            projection[r][c] = grid[source_r][source_c];
+        }
+    }
+
+    uint32_t parity_sum = 0;
+    for (uint32_t r = 0; r < projection_dim; r++) {
+        for (uint32_t c = 0; c < projection_dim; c++) {
+            parity_sum ^= projection[r][c];
+        }
+    }
+
+    raf_scalar_t noise_absorbed = (raf_scalar_t)(grid_dim * grid_dim - projection_dim * projection_dim);
+    raf_scalar_t collapse_ratio = (raf_scalar_t)(projection_dim * projection_dim) /
+                                  (raf_scalar_t)(grid_dim * grid_dim);
+
+    print_value("Parity (dual)", (raf_scalar_t)parity_sum);
+    print_value("Noise absorbed", noise_absorbed);
+    print_value("Collapse ratio", collapse_ratio);
+
+    print_success("Projection strategy computed successfully");
+}
+
 int main(void) {
     printf("\n");
     printf(ANSI_COLOR_CYAN);
@@ -388,6 +460,8 @@ int main(void) {
     example_mathematical_formulas();
     example_blocks();
     example_constants();
+    example_trinity_alignment();
+    example_projection_strategy();
     
     print_section("Summary");
     print_success("All RAFAELIA module examples completed successfully!");
