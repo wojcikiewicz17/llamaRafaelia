@@ -12,7 +12,25 @@ LLM inference in C/C++
 
 ## BitStack World Model v1 + Smart Guard
 
-This fork adds a compact BitStack World Model v1 specification and a Smart Guard safety gate for llama-cli and llama-server. See `SPEC.md` for the storage model and `SMART_GUARD_TESTS.md` for test prompts and expected outcomes. The Smart Guard runs before generation and returns short road-sign style warnings for WARN/BLOCK cases, without operational steps.
+This fork adds the BitStack World Model v1 spec and a Smart Guard safety gate for `llama-cli` and `llama-server`. See `SPEC_BITSTACK_WORLD_MODEL_V1.md` for the storage model, `SPEC_SMART_GUARD_V1.md` for the guard rules, and `SMART_GUARD_TESTS.md` for test prompts and expected outcomes. The Smart Guard runs before generation and returns short AVISA warnings for WARN/BLOCK cases, without operational steps.
+
+### Build & run (fork features)
+
+```bash
+# Build (portable by default)
+cmake -B build
+cmake --build build --config Release
+
+# Run the CLI with Smart Guard (default)
+./build/bin/llama-cli -m my_model.gguf -p "Quero uma explicação geral sobre segurança em produtos de limpeza."
+
+# Run the server (Smart Guard enabled by default)
+./build/bin/llama-server -m my_model.gguf
+```
+
+Notes:
+- Smart Guard is compiled into the common library; no extra flags are required.
+- A witness helper for Q4 blocks is available in `common/witness_q4.h` with optional warmup via `witness_config`.
 
 ## Rafaelia Baremetal Module
 

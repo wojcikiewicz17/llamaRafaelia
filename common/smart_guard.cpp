@@ -42,41 +42,46 @@ result evaluate(const std::string & prompt, const metadata & meta) {
     const std::string normalized = normalize_text(prompt);
 
     const std::vector<std::string> vulnerable_terms = {
-        "child", "kid", "baby", "toddler", "infant", "pregnant", "elderly", "senior",
-        "crianca", "bebe", "gravida", "idoso", "filho", "alergia", "allergy", "allergic", "asma", "asthma"
+        "child", "kid", "baby", "toddler", "infant", "pregnant", "pregnancy", "elderly", "senior",
+        "crianca", "menor", "bebe", "gravida", "idoso", "filho", "alergia", "allergy", "allergic", "asma", "asthma"
     };
 
     const std::vector<std::string> ambiguous_terms = {
-        "not sure", "unknown", "mystery", "unlabeled", "no label", "random", "unsure", "maybe",
-        "nao sei", "desconhecido", "mistura", "qualquer", "talvez", "sem rotulo"
+        "not sure", "unknown", "mystery", "unlabeled", "no label", "generic label", "unmarked", "random", "unsure", "maybe", "guess", "think",
+        "nao sei", "desconhecido", "nao identificado", "mistura", "qualquer", "talvez", "sem rotulo", "rotulo generico", "sem etiqueta", "acho que"
     };
 
     const std::vector<std::string> instruction_terms = {
-        "how to", "step by step", "instructions", "recipe", "build", "make",
-        "como fazer", "como misturar", "passo a passo", "instrucoes", "receita"
+        "how to", "step by step", "instructions", "guide", "tutorial", "recipe", "build", "make",
+        "como fazer", "como misturar", "passo a passo", "instrucoes", "procedimento", "receita"
     };
 
     const std::vector<std::string> hazard_terms = {
-        "bleach", "ammonia", "chlorine", "acid", "peroxide", "drain cleaner",
+        "bleach", "ammonia", "chlorine", "acid", "peroxide", "drain cleaner", "cleaner", "solvent", "pesticide",
         "explosive", "bomb", "weapon", "firearm", "poison", "toxic gas",
-        "agua sanitaria", "amonia", "cloro", "acido", "peroxido", "vinagre", "bomba", "arma", "veneno", "gas toxico"
+        "agua sanitaria", "amonia", "cloro", "acido", "peroxido", "vinagre", "saneante", "solvente", "pesticida", "bomba", "arma", "veneno", "gas toxico"
     };
 
     const std::vector<std::string> mix_terms = {
-        "mix", "combine", "blend", "misturar", "misture", "combinar"
+        "mix", "combine", "blend", "misturar", "misture", "mistura", "combinar"
     };
 
     const std::vector<std::string> pressure_terms = {
         "sealed", "closed container", "pressurized", "pressure",
-        "recipiente fechado", "garrafa fechada", "pressao"
+        "recipiente fechado", "garrafa fechada", "lata fechada", "pressao"
     };
 
     const std::vector<std::string> heat_terms = {
         "heat", "ignite", "burn", "flame", "aquec", "esquent", "fogo", "microondas"
     };
 
+    const std::vector<std::string> energy_terms = {
+        "energy", "electric", "battery", "power",
+        "energia", "eletric", "bateria", "tomada"
+    };
+
     const std::vector<std::string> allergy_terms = {
-        "allergy", "allergic", "alergia", "alergico"
+        "allergy", "allergic", "alergia", "alergico", "alergica"
     };
 
     const std::vector<std::string> critical_foods = {
@@ -87,7 +92,7 @@ result evaluate(const std::string & prompt, const metadata & meta) {
     bool ambiguous = contains_any(normalized, ambiguous_terms);
     bool hazard_request = contains_any(normalized, hazard_terms) && contains_any(normalized, instruction_terms);
     bool hazard_context = (contains_any(normalized, hazard_terms) && contains_any(normalized, mix_terms)) ||
-                          (contains_any(normalized, pressure_terms) && contains_any(normalized, heat_terms));
+                          (contains_any(normalized, pressure_terms) && (contains_any(normalized, heat_terms) || contains_any(normalized, energy_terms)));
     bool allergy_trigger = contains_any(normalized, allergy_terms) && contains_any(normalized, critical_foods);
 
     for (const auto & field : meta.fields) {
@@ -121,12 +126,12 @@ result evaluate(const std::string & prompt, const metadata & meta) {
 }
 
 const std::string & witness_safe() {
-    static const std::string message = "AVISO: prossiga com cautela e priorize segurança.";
+    static const std::string message = "AVISA: risco detectado. Resposta apenas em nivel geral.";
     return message;
 }
 
 const std::string & witness_block() {
-    static const std::string message = "BLOQUEADO: risco + ambiguidade detectados. Posso sugerir alternativa segura.";
+    static const std::string message = "AVISA: BLOQUEADO por risco + ambiguidade.";
     return message;
 }
 
@@ -144,10 +149,10 @@ std::string action_to_string(action value) {
 
 std::string render_message(const result & res) {
     if (res.action_taken == action::block) {
-        return witness_block() + std::string(" Alternativa segura: descreva o objetivo em alto nível ou peça ajuda profissional.");
+        return witness_block() + std::string(" Descreva o objetivo em alto nivel ou busque ajuda profissional.");
     }
     if (res.action_taken == action::warn) {
-        return witness_safe() + std::string(" Posso responder apenas em nível geral; considere orientação profissional.");
+        return witness_safe() + std::string(" Posso responder em alto nivel; considere orientacao profissional.");
     }
     return "";
 }
