@@ -81,7 +81,35 @@ typedef struct {
     raf_scalar_t verbo;           /* Verb/Word component */
     raf_scalar_t verdade;         /* Truth component */
     raf_scalar_t consciencia;     /* Consciousness component */
+    raf_scalar_t certeza_min;     /* Minimum certainty to decide */
+    raf_scalar_t soma_min;        /* Minimum additive contribution */
+    raf_scalar_t continuidade_min;/* Minimum continuity allowance */
+    raf_scalar_t nao_ferir_min;   /* Minimum non-harm score */
+    raf_scalar_t nao_instrumentalizar_min; /* Minimum non-instrumentalization */
+    raf_scalar_t confusao_max;    /* Maximum allowed confusion */
+    raf_scalar_t risco_vida_max;  /* Maximum allowed risk to life */
+    raf_scalar_t quebra_confianca_max; /* Maximum allowed trust break */
+    raf_scalar_t dano_irreversivel_max; /* Maximum allowed irreversible harm */
+    raf_scalar_t verdade_ref_min; /* Minimum truth reference */
 } raf_ethica_filter;
+
+/* Ethical signal inputs for decision gating */
+typedef struct {
+    raf_scalar_t intencao;           /* Intention coherence */
+    raf_scalar_t efeito;             /* Effect coherence */
+    raf_scalar_t cuidado_vida;       /* Care for life */
+    raf_scalar_t soma;               /* Additive contribution */
+    raf_scalar_t nao_ferir;          /* Non-harm score */
+    raf_scalar_t nao_instrumentalizar; /* Non-instrumentalization score */
+    raf_scalar_t continuidade;       /* Continuity allowance */
+    raf_scalar_t confusao;           /* Confusion risk */
+    raf_scalar_t risco_vida;         /* Risk to life */
+    raf_scalar_t quebra_confianca;   /* Trust break risk */
+    raf_scalar_t dano_irreversivel;  /* Irreversible harm risk */
+    raf_scalar_t certeza;            /* Decision certainty */
+    bool vulneravel;                 /* Vulnerable context flag */
+    bool ambiguo;                    /* Ambiguous context flag */
+} raf_ethica_signal;
 
 /* RAFAELIA Block Structure (formula 80) */
 typedef struct {
@@ -153,6 +181,8 @@ raf_scalar_t raf_retro_compute_weight(const raf_retroalimentacao *retro);
 void raf_ethica_init(raf_ethica_filter *ethica);
 raf_scalar_t raf_ethica_compute(const raf_ethica_filter *ethica);
 raf_scalar_t raf_ethica_compute_infinite(const raf_ethica_filter *ethica);
+bool raf_ethica_should_proceed(const raf_ethica_filter *ethica,
+                               const raf_ethica_signal *signal);
 
 /* Synapse weight computation (formula 0.3) */
 raf_scalar_t raf_synapse_compute_weight(const raf_synapse *syn);

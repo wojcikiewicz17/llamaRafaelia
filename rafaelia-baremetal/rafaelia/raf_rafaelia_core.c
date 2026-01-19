@@ -88,6 +88,16 @@ void raf_ethica_init(raf_ethica_filter *ethica) {
     ethica->verbo = 1.0f;
     ethica->verdade = 1.0f;
     ethica->consciencia = 1.0f;
+    ethica->certeza_min = 0.7f;
+    ethica->soma_min = 0.5f;
+    ethica->continuidade_min = 0.5f;
+    ethica->nao_ferir_min = 0.9f;
+    ethica->nao_instrumentalizar_min = 0.9f;
+    ethica->confusao_max = 0.2f;
+    ethica->risco_vida_max = 0.1f;
+    ethica->quebra_confianca_max = 0.1f;
+    ethica->dano_irreversivel_max = 0.05f;
+    ethica->verdade_ref_min = 0.5f;
 }
 
 /* Compute Φ_ethica (formula 0.4) */
@@ -105,6 +115,30 @@ raf_scalar_t raf_ethica_compute_infinite(const raf_ethica_filter *ethica) {
     raf_scalar_t exponent = numerator * denominator;
     
     return expf(exponent) - 1.0f;
+}
+
+bool raf_ethica_should_proceed(const raf_ethica_filter *ethica,
+                               const raf_ethica_signal *signal) {
+    if (!ethica || !signal) return false;
+
+    if (signal->vulneravel && signal->ambiguo) return false;
+    if (signal->certeza < ethica->certeza_min) return false;
+
+    raf_scalar_t verdade_ref = fminf(signal->intencao,
+                                     fminf(signal->efeito, signal->cuidado_vida));
+    if (verdade_ref < ethica->verdade_ref_min) return false;
+
+    if (signal->soma < ethica->soma_min) return false;
+    if (signal->nao_ferir < ethica->nao_ferir_min) return false;
+    if (signal->nao_instrumentalizar < ethica->nao_instrumentalizar_min) return false;
+    if (signal->continuidade < ethica->continuidade_min) return false;
+
+    if (signal->confusao > ethica->confusao_max) return false;
+    if (signal->risco_vida > ethica->risco_vida_max) return false;
+    if (signal->quebra_confianca > ethica->quebra_confianca_max) return false;
+    if (signal->dano_irreversivel > ethica->dano_irreversivel_max) return false;
+
+    return true;
 }
 
 /* Compute synapse weight (formula 0.3) */
