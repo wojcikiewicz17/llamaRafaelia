@@ -395,6 +395,48 @@ void example_trinity_alignment() {
     print_success("Trinity alignment displayed successfully");
 }
 
+/* Example 11: Projection, parity, and collapse strategy */
+void example_projection_strategy() {
+    print_section("11. Projection + Parity + Collapse Strategy");
+
+    print_info("Input grid (10x10) collapsed to 8-bit projection:");
+    const uint32_t grid_dim = 10;
+    const uint32_t projection_dim = 8;
+    uint8_t grid[10][10] = {0};
+    uint8_t projection[8][8] = {0};
+
+    for (uint32_t r = 0; r < grid_dim; r++) {
+        for (uint32_t c = 0; c < grid_dim; c++) {
+            grid[r][c] = (uint8_t)((r + c) % 2);
+        }
+    }
+
+    for (uint32_t r = 0; r < projection_dim; r++) {
+        for (uint32_t c = 0; c < projection_dim; c++) {
+            uint32_t source_r = (r * grid_dim) / projection_dim;
+            uint32_t source_c = (c * grid_dim) / projection_dim;
+            projection[r][c] = grid[source_r][source_c];
+        }
+    }
+
+    uint32_t parity_sum = 0;
+    for (uint32_t r = 0; r < projection_dim; r++) {
+        for (uint32_t c = 0; c < projection_dim; c++) {
+            parity_sum ^= projection[r][c];
+        }
+    }
+
+    raf_scalar_t noise_absorbed = (raf_scalar_t)(grid_dim * grid_dim - projection_dim * projection_dim);
+    raf_scalar_t collapse_ratio = (raf_scalar_t)(projection_dim * projection_dim) /
+                                  (raf_scalar_t)(grid_dim * grid_dim);
+
+    print_value("Parity (dual)", (raf_scalar_t)parity_sum);
+    print_value("Noise absorbed", noise_absorbed);
+    print_value("Collapse ratio", collapse_ratio);
+
+    print_success("Projection strategy computed successfully");
+}
+
 int main(void) {
     printf("\n");
     printf(ANSI_COLOR_CYAN);
@@ -419,6 +461,7 @@ int main(void) {
     example_blocks();
     example_constants();
     example_trinity_alignment();
+    example_projection_strategy();
     
     print_section("Summary");
     print_success("All RAFAELIA module examples completed successfully!");
