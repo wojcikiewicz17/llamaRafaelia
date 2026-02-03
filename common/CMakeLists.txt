@@ -75,8 +75,6 @@ add_library(${TARGET} STATIC
     smart_guard.h
     synonym_normalizer.cpp
     synonym_normalizer.h
-    witness_q4.cpp
-    witness_q4.h
     )
 
 if (BUILD_SHARED_LIBS)

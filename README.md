@@ -12,7 +12,7 @@ LLM inference in C/C++
 
 ## BitStack World Model v1 + Smart Guard
 
-This fork adds the BitStack World Model v1 spec and a Smart Guard safety gate for `llama-cli` and `llama-server`. See `SPEC_BITSTACK_WORLD_MODEL_V1.md` for the storage model, `SPEC_SMART_GUARD_V1.md` for the guard rules, and `SMART_GUARD_TESTS.md` for test prompts and expected outcomes. The Smart Guard runs before generation and returns short AVISA warnings for WARN/BLOCK cases, without operational steps.
+This fork adds the BitStack World Model v1 spec and a Smart Guard safety gate for `llama-cli` and `llama-server`. All Rafaelia documentation now lives under `docs/rafaelia/` for upstream-friendly merges. Start at `docs/rafaelia/README.md` for the index, with specs in `docs/rafaelia/specs/` and tests in `docs/rafaelia/tests/`. The Smart Guard runs before generation and returns short AVISA warnings for WARN/BLOCK cases, without operational steps.
 
 ### Build & run (fork features)
 
@@ -30,7 +30,7 @@ cmake --build build --config Release
 
 Notes:
 - Smart Guard is compiled into the common library; no extra flags are required.
-- A witness helper for Q4 blocks is available in `common/witness_q4.h` with optional warmup via `witness_config`.
+- A witness helper for Q4 blocks is parked in `pocs/witness_q4/` while it matures.
 
 ## Rafaelia Baremetal Module
 
@@ -57,11 +57,11 @@ This fork includes the **Rafaelia Baremetal Module** - a comprehensive, dependen
   - Optional native optimization for performance builds
 
 **Documentation:**
-- **[Architecture & Design](LLAMA_RAFAELIA_DESIGN.md) - Integration architecture and design principles** 🏗️
+- **[Architecture & Design](docs/rafaelia/design/LLAMA_RAFAELIA_DESIGN.md) - Integration architecture and design principles** 🏗️
 - [Main Documentation](rafaelia-baremetal/README.md) - Module overview and quick start
 - [Complete API Guide](rafaelia-baremetal/docs/API_GUIDE.md) - Comprehensive examples for all modules
 - [42 Tools Reference](rafaelia-baremetal/docs/42_TOOLS.md) - Utility tools documentation
-- [Implementation Summary](RAFAELIA_IMPLEMENTATION.md) - Complete implementation details
+- [Implementation Summary](docs/rafaelia/design/RAFAELIA_IMPLEMENTATION.md) - Complete implementation details
 - **[Performance Boosters Guide](docs/BOOSTERS.md) - Detailed guide on backends, types, and benchmarks** 🚀
 - **[Guia de Boosters (Português)](docs/BOOSTERS_PT.md) - Guia completo em português sobre aceleradores** 🇧🇷
 

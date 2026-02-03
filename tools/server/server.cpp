@@ -11,6 +11,10 @@
 #include "mtmd.h"
 #include "smart_guard.h"
 
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+#include "rafaelia.h"
+#endif
+
 // mime type for sending response
 #define MIMETYPE_JSON "application/json; charset=utf-8"
 
@@ -2385,6 +2389,16 @@ struct server_context {
 
         params_base = params;
 
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+        const std::string cache_dir = params.rafstore_cache_dir.empty() ? ".rafaelia-cache" : params.rafstore_cache_dir;
+        rafstore_init(cache_dir.c_str(), params.smart_guard_policy.empty() ? nullptr : params.smart_guard_policy.c_str());
+        if (params.rafstore_prefetch_window_mb > 0) {
+            rafstore_prefetch(params.model.path.c_str(),
+                              static_cast<size_t>(params.rafstore_prefetch_window_mb),
+                              params.rafstore_prefetch_strategy.c_str());
+        }
+#endif
+
         llama_init = common_init_from_params(params_base);
 
         model = llama_init.model.get();
@@ -4422,6 +4436,16 @@ int guard_action_rank(smart_guard::action value) {
     return 0;
 }
 
+json guard_result_json(const smart_guard::result & guard_result) {
+    return json{
+        {"action_taken", smart_guard::action_to_string(guard_result.action_taken)},
+        {"reason_code", guard_result.reason_code},
+        {"categories", guard_result.categories},
+        {"normalized_prompt_digest", guard_result.normalized_prompt_digest},
+        {"risk_level", guard_result.risk_level},
+    };
+}
+
 std::vector<std::string> guard_collect_prompts(const json & prompt) {
     std::vector<std::string> prompts;
     if (prompt.is_string()) {
@@ -4440,11 +4464,16 @@ std::vector<std::string> guard_collect_prompts(const json & prompt) {
     return prompts;
 }
 
-smart_guard::result guard_evaluate_prompt(const json & prompt) {
+smart_guard::result guard_evaluate_prompt(const json & prompt, const common_params & params) {
     smart_guard::metadata meta;
+    if (!params.smart_guard_policy.empty()) {
+        meta.fields["policy_path"] = params.smart_guard_policy;
+    }
+    const smart_guard::mode guard_mode = smart_guard::mode_from_string(params.smart_guard_mode);
     smart_guard::result worst;
     for (const auto & text : guard_collect_prompts(prompt)) {
         smart_guard::result current = smart_guard::evaluate(text, meta);
+        current = smart_guard::apply_mode(current, guard_mode);
         if (guard_action_rank(current.action_taken) > guard_action_rank(worst.action_taken)) {
             worst = current;
         }
@@ -4459,9 +4488,24 @@ std::string guard_model_name(const server_context & ctx_server) {
     return ctx_server.params_base.model.path;
 }
 
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+json guard_event_json(const smart_guard::result & guard_result, const server_context & ctx_server) {
+    const std::time_t t = std::time(0);
+    return json{
+        {"timestamp", t},
+        {"model", guard_model_name(ctx_server)},
+        {"action", smart_guard::action_to_string(guard_result.action_taken)},
+        {"reason_code", guard_result.reason_code},
+        {"categories", guard_result.categories},
+        {"normalized_prompt_digest", guard_result.normalized_prompt_digest},
+    };
+}
+#endif
+
 json guard_response_json(oaicompat_type oaicompat, const std::string & message, const smart_guard::result & guard_result, const server_context & ctx_server) {
     const std::time_t t = std::time(0);
     const std::string model_name = guard_model_name(ctx_server);
+    const json guard_json = guard_result_json(guard_result);
 
     if (oaicompat == OAICOMPAT_TYPE_COMPLETION) {
         return json{
@@ -4471,6 +4515,7 @@ json guard_response_json(oaicompat_type oaicompat, const std::string & message, 
             {"object", "text_completion"},
             {"usage", json{{"completion_tokens", 0}, {"prompt_tokens", 0}, {"total_tokens", 0}}},
             {"id", gen_chatcmplid()},
+            {"guard_result", guard_json},
         };
     }
 
@@ -4482,6 +4527,7 @@ json guard_response_json(oaicompat_type oaicompat, const std::string & message, 
             {"object", "chat.completion"},
             {"usage", json{{"completion_tokens", 0}, {"prompt_tokens", 0}, {"total_tokens", 0}}},
             {"id", gen_chatcmplid()},
+            {"guard_result", guard_json},
         };
     }
 
@@ -4492,7 +4538,7 @@ json guard_response_json(oaicompat_type oaicompat, const std::string & message, 
         {"model", model_name},
         {"tokens_predicted", 0},
         {"tokens_evaluated", 0},
-        {"smart_guard", json{{"action", smart_guard::action_to_string(guard_result.action_taken)}, {"risk_level", guard_result.risk_level}, {"reasons", guard_result.reasons}}},
+        {"guard_result", guard_json},
     };
 }
 
@@ -4533,6 +4579,12 @@ int main(int argc, char ** argv) {
     if (!common_params_parse(argc, argv, params, LLAMA_EXAMPLE_SERVER)) {
         return 1;
     }
+
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+    if (!params.smart_guard_log.empty()) {
+        bitstack_set_log_path(params.smart_guard_log.c_str());
+    }
+#endif
 
     // TODO: should we have a separate n_parallel parameter for the server?
     //       https://github.com/ggml-org/llama.cpp/pull/16736#discussion_r2483763177
@@ -5085,25 +5137,34 @@ int main(int argc, char ** argv) {
             std::vector<server_task> tasks;
 
             const auto & prompt = data.at("prompt");
-            smart_guard::result guard_result = guard_evaluate_prompt(prompt);
-            if (guard_result.action_taken != smart_guard::action::allow) {
-                std::string message = smart_guard::render_message(guard_result);
-                json guard_json = guard_response_json(oaicompat, message, guard_result, ctx_server);
-                if (!stream) {
-                    res_ok(res, guard_json);
-                } else {
-                    const auto chunked_content_provider = [guard_json, oaicompat](size_t, httplib::DataSink & sink) {
-                        server_sent_event(sink, guard_json);
-                        if (oaicompat != OAICOMPAT_TYPE_NONE) {
-                            static const std::string ev_done = "data: [DONE]\n\n";
-                            sink.write(ev_done.data(), ev_done.size());
-                        }
-                        sink.done();
-                        return false;
-                    };
-                    res.set_chunked_content_provider("text/event-stream", chunked_content_provider);
+            if (ctx_server.params_base.smart_guard) {
+                smart_guard::result guard_result = guard_evaluate_prompt(prompt, ctx_server.params_base);
+                if (guard_result.action_taken != smart_guard::action::allow) {
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+                    if (!ctx_server.params_base.smart_guard_log.empty()) {
+                        bitstack_append(guard_event_json(guard_result, ctx_server).dump().c_str());
+                    }
+#endif
                 }
-                return;
+                if (guard_result.action_taken == smart_guard::action::block) {
+                    std::string message = smart_guard::render_message(guard_result);
+                    json guard_json = guard_response_json(oaicompat, message, guard_result, ctx_server);
+                    if (!stream) {
+                        res_ok(res, guard_json);
+                    } else {
+                        const auto chunked_content_provider = [guard_json, oaicompat](size_t, httplib::DataSink & sink) {
+                            server_sent_event(sink, guard_json);
+                            if (oaicompat != OAICOMPAT_TYPE_NONE) {
+                                static const std::string ev_done = "data: [DONE]\n\n";
+                                sink.write(ev_done.data(), ev_done.size());
+                            }
+                            sink.done();
+                            return false;
+                        };
+                        res.set_chunked_content_provider("text/event-stream", chunked_content_provider);
+                    }
+                    return;
+                }
             }
             // TODO: this log can become very long, put it behind a flag or think about a more compact format
             //SRV_DBG("Prompt: %s\n", prompt.is_string() ? prompt.get<std::string>().c_str() : prompt.dump(2).c_str());

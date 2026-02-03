@@ -39,4 +39,8 @@ if (WIN32)
     TARGET_LINK_LIBRARIES(${TARGET} PRIVATE ws2_32)
 endif()
 
+if (RAFAELIA_BAREMETAL)
+    target_link_libraries(${TARGET} PRIVATE rafaelia-baremetal)
+endif()
+
 target_compile_features(${TARGET} PRIVATE cxx_std_17)
