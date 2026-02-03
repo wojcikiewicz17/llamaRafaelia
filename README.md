@@ -81,6 +81,16 @@ cmake --build build --config Release
 ./build/bin/rafaelia-integration
 ```
 
+### Low-level llama target (minimal dependencies)
+
+For a strict, low-level build of llama core without model implementations, use the new `llama-lowlevel` target. It exposes the core runtime, vocab, sampling, IO, and Unicode plumbing without pulling in the model registry.
+
+```bash
+cmake -B build
+cmake --build build --config Release
+# Link with: -llama-lowlevel
+```
+
 ---
 
 ## Recent API changes
