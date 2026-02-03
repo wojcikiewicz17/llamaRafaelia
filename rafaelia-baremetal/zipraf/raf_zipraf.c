@@ -103,6 +103,49 @@ int raf_zipraf_add_data(raf_zipraf_archive *archive, const char *name,
     return 0;
 }
 
+int raf_zipraf_add_file(raf_zipraf_archive *archive, const char *name,
+                        const char *filename) {
+    if (!archive || !name || !filename) return -1;
+
+    FILE *file = fopen(filename, "rb");
+    if (!file) return -1;
+
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return -1;
+    }
+
+    long file_size = ftell(file);
+    if (file_size < 0) {
+        fclose(file);
+        return -1;
+    }
+
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return -1;
+    }
+
+    uint8_t *buffer = (uint8_t*)malloc((size_t)file_size);
+    if (!buffer) {
+        fclose(file);
+        return -1;
+    }
+
+    size_t read_size = fread(buffer, 1, (size_t)file_size, file);
+    fclose(file);
+
+    if (read_size != (size_t)file_size) {
+        free(buffer);
+        return -1;
+    }
+
+    int result = raf_zipraf_add_data(archive, name, buffer, (size_t)file_size);
+    free(buffer);
+
+    return result;
+}
+
 int raf_zipraf_extract_data(const raf_zipraf_archive *archive, const char *name,
                              uint8_t **output, size_t *size) {
     if (!archive || !name || !output || !size) return -1;
@@ -141,6 +184,112 @@ int raf_zipraf_list_entries(const raf_zipraf_archive *archive) {
     /* Would print entry information in a real implementation */
     /* For now, just return count without iteration */
     return archive->num_entries;
+}
+
+/* Archive save/load */
+int raf_zipraf_save(const raf_zipraf_archive *archive, const char *filename) {
+    if (!archive || !filename) return -1;
+
+    FILE *file = fopen(filename, "wb");
+    if (!file) return -1;
+
+    const uint32_t magic = 0x5A524146; /* "ZRAF" */
+    const uint32_t version = 1;
+    const uint64_t data_size = (uint64_t)archive->data_size;
+
+    if (fwrite(&magic, sizeof(magic), 1, file) != 1 ||
+        fwrite(&version, sizeof(version), 1, file) != 1 ||
+        fwrite(&archive->num_entries, sizeof(archive->num_entries), 1, file) != 1 ||
+        fwrite(&data_size, sizeof(data_size), 1, file) != 1) {
+        fclose(file);
+        return -1;
+    }
+
+    if (archive->num_entries > 0) {
+        size_t entries_size = sizeof(raf_zipraf_entry) * archive->num_entries;
+        if (fwrite(archive->entries, 1, entries_size, file) != entries_size) {
+            fclose(file);
+            return -1;
+        }
+    }
+
+    if (archive->data_size > 0) {
+        if (fwrite(archive->data, 1, archive->data_size, file) != archive->data_size) {
+            fclose(file);
+            return -1;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
+raf_zipraf_archive* raf_zipraf_load(const char *filename) {
+    if (!filename) return NULL;
+
+    FILE *file = fopen(filename, "rb");
+    if (!file) return NULL;
+
+    uint32_t magic = 0;
+    uint32_t version = 0;
+    uint32_t num_entries = 0;
+    uint64_t data_size = 0;
+
+    if (fread(&magic, sizeof(magic), 1, file) != 1 ||
+        fread(&version, sizeof(version), 1, file) != 1 ||
+        fread(&num_entries, sizeof(num_entries), 1, file) != 1 ||
+        fread(&data_size, sizeof(data_size), 1, file) != 1) {
+        fclose(file);
+        return NULL;
+    }
+
+    if (magic != 0x5A524146 || version != 1) {
+        fclose(file);
+        return NULL;
+    }
+
+    raf_zipraf_archive *archive = raf_zipraf_create();
+    if (!archive) {
+        fclose(file);
+        return NULL;
+    }
+
+    archive->num_entries = num_entries;
+    archive->data_size = (size_t)data_size;
+
+    if (num_entries > 0) {
+        archive->entries = (raf_zipraf_entry*)malloc(sizeof(raf_zipraf_entry) * num_entries);
+        if (!archive->entries) {
+            raf_zipraf_destroy(archive);
+            fclose(file);
+            return NULL;
+        }
+
+        size_t entries_size = sizeof(raf_zipraf_entry) * num_entries;
+        if (fread(archive->entries, 1, entries_size, file) != entries_size) {
+            raf_zipraf_destroy(archive);
+            fclose(file);
+            return NULL;
+        }
+    }
+
+    if (archive->data_size > 0) {
+        archive->data = (uint8_t*)malloc(archive->data_size);
+        if (!archive->data) {
+            raf_zipraf_destroy(archive);
+            fclose(file);
+            return NULL;
+        }
+
+        if (fread(archive->data, 1, archive->data_size, file) != archive->data_size) {
+            raf_zipraf_destroy(archive);
+            fclose(file);
+            return NULL;
+        }
+    }
+
+    fclose(file);
+    return archive;
 }
 
 /* Simple LZ77 compression (sliding window) */
