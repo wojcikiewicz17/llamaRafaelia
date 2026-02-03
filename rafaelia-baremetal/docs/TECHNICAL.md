@@ -18,6 +18,8 @@ The Rafaelia Baremetal Module is designed as a self-contained, dependency-free l
 ```
 rafaelia-baremetal/
 ├── core/          - Linear algebra and matrix operations
+│   └── raf_system - Architecture registry + RF_ID identity map
+│   └── raf_platform - Dependency-free libc-style primitives
 ├── bitraf/        - Bit-level operations and compression
 ├── zipraf/        - Archiving and data compression
 ├── rafstore/      - Storage management and data structures

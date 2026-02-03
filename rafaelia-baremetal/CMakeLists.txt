@@ -49,6 +49,10 @@ if(RAFAELIA_BAREMETAL)
     set(RAFAELIA_CORE_SOURCES
         core/raf_core.c
         core/raf_core.h
+        core/raf_platform.c
+        core/raf_platform.h
+        core/raf_system.c
+        core/raf_system.h
     )
     
     # BITRAF library sources
@@ -126,6 +130,8 @@ if(RAFAELIA_BAREMETAL)
     # Install headers
     install(FILES
         core/raf_core.h
+        core/raf_platform.h
+        core/raf_system.h
         bitraf/raf_bitraf.h
         bitstack/raf_bitstack.h
         zipraf/raf_zipraf.h
@@ -153,6 +159,8 @@ if(RAFAELIA_BAREMETAL)
 #define RAFAELIA_BAREMETAL_H
 
 #include \"core/raf_core.h\"
+#include \"core/raf_platform.h\"
+#include \"core/raf_system.h\"
 #include \"bitraf/raf_bitraf.h\"
 #include \"bitstack/raf_bitstack.h\"
 #include \"zipraf/raf_zipraf.h\"

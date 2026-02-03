@@ -8,6 +8,8 @@
  */
 
 #include "core/raf_core.h"
+#include "core/raf_platform.h"
+#include "core/raf_system.h"
 #include "bitraf/raf_bitraf.h"
 #include "zipraf/raf_zipraf.h"
 #include "rafstore/raf_rafstore.h"
@@ -31,6 +33,49 @@ void example_hardware_detection(void) {
     printf("AVX: %s\n", features.has_avx ? "Yes" : "No");
     printf("AVX2: %s\n", features.has_avx2 ? "Yes" : "No");
     printf("NEON: %s\n", features.has_neon ? "Yes" : "No");
+}
+
+void example_system_identity(void) {
+    printf("\n=== Rafaelia System Identity ===\n");
+
+    const raf_system_identity *identity = raf_system_identity_get();
+
+    printf("RF_ID: %s\n", identity->rf_id);
+    printf("Kernel: %s\n", identity->kernel);
+    printf("Mode: %s\n", identity->mode);
+    printf("Ethic: %s\n", identity->ethic);
+    printf("Hash Core: %s\n", identity->hash_core);
+    printf("Vector Core: %s\n", identity->vector_core);
+    printf("Cognition: %s\n", identity->cognition);
+    printf("Universe: %s\n", identity->universe);
+}
+
+void example_system_modules(void) {
+    printf("\n=== Rafaelia Architecture Map ===\n");
+
+    const raf_module_info *modules = NULL;
+    unsigned int count = raf_system_list_modules(&modules);
+
+    for (raf_layer layer = RAF_LAYER_HIGH; layer <= RAF_LAYER_HAL; layer++) {
+        printf("%s:\n", raf_layer_name(layer));
+        for (unsigned int i = 0; i < count; i++) {
+            if (modules[i].layer == layer) {
+                printf("  - %s: %s\n", modules[i].name, modules[i].description);
+            }
+        }
+    }
+}
+
+void example_platform_primitives(void) {
+    printf("\n=== Platform Primitives (Baremetal) ===\n");
+
+    char buffer[32];
+    const char *message = "Rafaelia";
+
+    raf_platform_memset(buffer, 0, sizeof(buffer));
+    raf_platform_strncpy(buffer, message, sizeof(buffer) - 1);
+
+    printf("Buffer: %s (len=%u)\n", buffer, raf_platform_strlen(buffer));
 }
 
 void example_matrix_operations(void) {
@@ -160,7 +205,10 @@ void example_rafstore_operations(void) {
 int main(void) {
     printf("Rafaelia Baremetal Module - Example Usage\n");
     printf("==========================================\n");
-    
+
+    example_system_identity();
+    example_system_modules();
+    example_platform_primitives();
     example_hardware_detection();
     example_matrix_operations();
     example_bitraf_operations();
