@@ -2138,6 +2138,46 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         }
     ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
     add_opt(common_arg(
+        {"--bitstack-log"}, "FNAME",
+        "path to bitstack log (append-only)",
+        [](common_params & params, const std::string & value) {
+            params.bitstack_log = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--model-audit"}, "<on|off>",
+        string_format("enable model stream audit (default: %s)", params.model_audit ? "on" : "off"),
+        [](common_params & params, const std::string & value) {
+            if (is_truthy(value)) {
+                params.model_audit = true;
+            } else if (is_falsey(value)) {
+                params.model_audit = false;
+            } else {
+                throw std::runtime_error("error: invalid value for --model-audit (use on|off)");
+            }
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--witness"}, "<on|off>",
+        string_format("enable witness integrity checks (default: %s)", params.witness ? "on" : "off"),
+        [](common_params & params, const std::string & value) {
+            if (is_truthy(value)) {
+                params.witness = true;
+            } else if (is_falsey(value)) {
+                params.witness = false;
+            } else {
+                throw std::runtime_error("error: invalid value for --witness (use on|off)");
+            }
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--witness-expected"}, "HEX",
+        "expected witness signature (crc32c:xorfold)",
+        [](common_params & params, const std::string & value) {
+            params.witness_expected = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
         {"--rafstore-cache-dir"}, "DIR",
         "rafstore cache directory (default: empty)",
         [](common_params & params, const std::string & value) {

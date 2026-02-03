@@ -48,6 +48,8 @@ add_library(${TARGET} STATIC
     arg.cpp
     arg.h
     base64.hpp
+    bitstack_log.cpp
+    bitstack_log.h
     chat-parser.cpp
     chat-parser.h
     chat.cpp
@@ -56,6 +58,8 @@ add_library(${TARGET} STATIC
     common.h
     console.cpp
     console.h
+    crc32c.cpp
+    crc32c.h
     http.h
     json-partial.cpp
     json-partial.h
@@ -73,8 +77,12 @@ add_library(${TARGET} STATIC
     speculative.h
     smart_guard.cpp
     smart_guard.h
+    stream_audit.cpp
+    stream_audit.h
     synonym_normalizer.cpp
     synonym_normalizer.h
+    witness_model.cpp
+    witness_model.h
     )
 
 if (BUILD_SHARED_LIBS)
@@ -82,6 +90,20 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 set(LLAMA_COMMON_EXTRA_LIBS build_info)
+
+# Rafaelia compile toggles
+if (LLAMA_RAF_BITSTACK)
+    target_compile_definitions(${TARGET} PUBLIC LLAMA_RAF_BITSTACK)
+endif()
+if (LLAMA_RAF_AUDIT)
+    target_compile_definitions(${TARGET} PUBLIC LLAMA_RAF_AUDIT)
+endif()
+if (LLAMA_RAF_RAFSTORE)
+    target_compile_definitions(${TARGET} PUBLIC LLAMA_RAF_RAFSTORE)
+endif()
+if (LLAMA_RAF_WITNESS)
+    target_compile_definitions(${TARGET} PUBLIC LLAMA_RAF_WITNESS)
+endif()
 
 # Use curl to download model url
 if (LLAMA_CURL)

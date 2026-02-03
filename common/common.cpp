@@ -6,8 +6,11 @@
 #include "gguf.h"
 
 #include "common.h"
+#include "bitstack_log.h"
 #include "log.h"
 #include "llama.h"
+#include "stream_audit.h"
+#include "witness_model.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -916,6 +919,49 @@ std::string fs_get_cache_file(const std::string & filename) {
 struct common_init_result common_init_from_params(common_params & params) {
     common_init_result iparams;
     auto mparams = common_model_params_to_llama(params);
+
+#if defined(LLAMA_RAF_AUDIT)
+    if (params.model_audit) {
+        sa_opts opts;
+        opts.chunk_size = 64 * 1024;
+        sa_ctx * audit_ctx = sa_open(params.model.path.c_str(), opts);
+        if (audit_ctx) {
+            std::vector<uint8_t> buffer(opts.chunk_size);
+            while (sa_read(audit_ctx, buffer.data(), buffer.size()) > 0) {
+                // streaming read for audit
+            }
+            sa_report report = sa_report_ctx(audit_ctx);
+            sa_close(audit_ctx);
+            std::ostringstream audit_msg;
+            audit_msg << "bytes=" << report.bytes_total
+                      << ",crc32c=" << report.crc32c_final
+                      << ",throughput_mbps=" << report.throughput_mbps
+                      << ",io_reads=" << report.io_reads
+                      << ",seconds=" << report.seconds;
+            bs_event("model_audit", 0, audit_msg.str().c_str());
+        } else {
+            bs_event("model_audit", 1, "failed to open model for audit");
+        }
+    }
+#endif
+
+#if defined(LLAMA_RAF_WITNESS)
+    if (params.witness) {
+        witness_report report = witness_file(params.model.path.c_str());
+        const std::string signature = witness_signature(report);
+        int code = report.ok ? 0 : 1;
+        std::string msg = "signature=" + signature + ",bytes=" + std::to_string(report.bytes_sampled);
+        if (!params.witness_expected.empty()) {
+            if (params.witness_expected != signature) {
+                code = 2;
+                msg += ",expected=" + params.witness_expected + ",match=false";
+            } else {
+                msg += ",match=true";
+            }
+        }
+        bs_event("model_witness", code, msg.c_str());
+    }
+#endif
 
     llama_model * model = llama_model_load_from_file(params.model.path.c_str(), mparams);
     if (model == NULL) {

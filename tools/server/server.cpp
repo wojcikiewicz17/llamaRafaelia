@@ -10,6 +10,7 @@
 #include "speculative.h"
 #include "mtmd.h"
 #include "smart_guard.h"
+#include "bitstack_log.h"
 
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
 #include "rafaelia.h"
@@ -2389,7 +2390,7 @@ struct server_context {
 
         params_base = params;
 
-#if defined(RAFAELIA_BAREMETAL_ENABLED)
+#if defined(RAFAELIA_BAREMETAL_ENABLED) && defined(LLAMA_RAF_RAFSTORE)
         const std::string cache_dir = params.rafstore_cache_dir.empty() ? ".rafaelia-cache" : params.rafstore_cache_dir;
         rafstore_init(cache_dir.c_str(), params.smart_guard_policy.empty() ? nullptr : params.smart_guard_policy.c_str());
         if (params.rafstore_prefetch_window_mb > 0) {
@@ -4561,6 +4562,13 @@ static void log_server_request(const httplib::Request & req, const httplib::Resp
 std::function<void(int)> shutdown_handler;
 std::atomic_flag is_terminating = ATOMIC_FLAG_INIT;
 
+static std::string resolve_bitstack_log_path(const common_params & params) {
+    if (!params.bitstack_log.empty()) {
+        return params.bitstack_log;
+    }
+    return params.smart_guard_log;
+}
+
 inline void signal_handler(int signal) {
     if (is_terminating.test_and_set()) {
         // in case it hangs, we can force terminate the server by hitting Ctrl+C twice
@@ -4581,10 +4589,14 @@ int main(int argc, char ** argv) {
     }
 
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
-    if (!params.smart_guard_log.empty()) {
-        bitstack_set_log_path(params.smart_guard_log.c_str());
+    const std::string bitstack_log_path = resolve_bitstack_log_path(params);
+    if (!bitstack_log_path.empty()) {
+        bitstack_set_log_path(bitstack_log_path.c_str());
     }
 #endif
+    if (!resolve_bitstack_log_path(params).empty()) {
+        bs_init(resolve_bitstack_log_path(params).c_str());
+    }
 
     // TODO: should we have a separate n_parallel parameter for the server?
     //       https://github.com/ggml-org/llama.cpp/pull/16736#discussion_r2483763177
@@ -5137,14 +5149,24 @@ int main(int argc, char ** argv) {
             std::vector<server_task> tasks;
 
             const auto & prompt = data.at("prompt");
+            {
+                std::string prompt_summary = prompt.is_string() ? prompt.get<std::string>() : prompt.dump();
+                std::string msg = "type=" + std::to_string(static_cast<int>(type)) +
+                    ",len=" + std::to_string(prompt_summary.size()) +
+                    ",stream=" + std::string(stream ? "true" : "false");
+                bs_event("request", 0, msg.c_str());
+            }
             if (ctx_server.params_base.smart_guard) {
                 smart_guard::result guard_result = guard_evaluate_prompt(prompt, ctx_server.params_base);
                 if (guard_result.action_taken != smart_guard::action::allow) {
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
-                    if (!ctx_server.params_base.smart_guard_log.empty()) {
+                    if (!resolve_bitstack_log_path(ctx_server.params_base).empty()) {
                         bitstack_append(guard_event_json(guard_result, ctx_server).dump().c_str());
                     }
 #endif
+                    bs_event("smart_guard_action",
+                             static_cast<int>(guard_result.action_taken),
+                             guard_result.reason_code.c_str());
                 }
                 if (guard_result.action_taken == smart_guard::action::block) {
                     std::string message = smart_guard::render_message(guard_result);

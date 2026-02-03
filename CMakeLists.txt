@@ -82,6 +82,10 @@ option(LLAMA_SANITIZE_UNDEFINED "llama: enable undefined sanitizer" OFF)
 
 # utils
 option(LLAMA_BUILD_COMMON "llama: build common utils library" ${LLAMA_STANDALONE})
+option(LLAMA_RAF_BITSTACK "llama: enable Rafaelia bitstack logging" OFF)
+option(LLAMA_RAF_AUDIT    "llama: enable Rafaelia stream audit" OFF)
+option(LLAMA_RAF_RAFSTORE "llama: enable Rafaelia rafstore prefetch" OFF)
+option(LLAMA_RAF_WITNESS  "llama: enable Rafaelia witness checks" OFF)
 
 # extra artifacts
 option(LLAMA_BUILD_TESTS    "llama: build tests"          ${LLAMA_STANDALONE})

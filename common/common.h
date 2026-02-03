@@ -336,9 +336,13 @@ struct common_params {
     std::string smart_guard_policy   = ""; // path to smart guard policy file                              // NOLINT
     std::string smart_guard_mode     = "block"; // smart guard mode: warn|block                             // NOLINT
     std::string smart_guard_log      = ""; // path to smart guard local log                                // NOLINT
+    std::string bitstack_log         = ""; // path to bitstack log                                         // NOLINT
     std::string rafstore_cache_dir   = ""; // rafstore cache directory                                     // NOLINT
     int32_t rafstore_prefetch_window_mb = 64; // rafstore prefetch window in MB                             // NOLINT
     std::string rafstore_prefetch_strategy = "sequential"; // rafstore prefetch strategy                    // NOLINT
+    bool    model_audit = false; // audit model loading with stream audit
+    bool    witness = false; // enable witness integrity checks
+    std::string witness_expected = ""; // expected witness signature (crc32c:xorfold)                     // NOLINT
 
     std::vector<std::string> in_files;   // all input files
     std::vector<std::string> antiprompt; // strings upon which more user input is prompted (a.k.a. reverse prompts)
