@@ -70,11 +70,11 @@ const raf_system_identity *raf_system_identity_get(void) {
     return &k_identity;
 }
 
-size_t raf_system_list_modules(const raf_module_info **modules) {
+unsigned int raf_system_list_modules(const raf_module_info **modules) {
     if (modules != NULL) {
         *modules = k_modules;
     }
-    return sizeof(k_modules) / sizeof(k_modules[0]);
+    return (unsigned int)(sizeof(k_modules) / sizeof(k_modules[0]));
 }
 
 const char *raf_layer_name(raf_layer layer) {

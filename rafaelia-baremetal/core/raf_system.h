@@ -11,8 +11,6 @@
 #ifndef RAFAELIA_SYSTEM_H
 #define RAFAELIA_SYSTEM_H
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,7 +40,7 @@ typedef struct {
 } raf_system_identity;
 
 const raf_system_identity *raf_system_identity_get(void);
-size_t raf_system_list_modules(const raf_module_info **modules);
+unsigned int raf_system_list_modules(const raf_module_info **modules);
 const char *raf_layer_name(raf_layer layer);
 
 #ifdef __cplusplus

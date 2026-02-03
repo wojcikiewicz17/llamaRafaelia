@@ -53,11 +53,11 @@ void example_system_modules(void) {
     printf("\n=== Rafaelia Architecture Map ===\n");
 
     const raf_module_info *modules = NULL;
-    size_t count = raf_system_list_modules(&modules);
+    unsigned int count = raf_system_list_modules(&modules);
 
     for (raf_layer layer = RAF_LAYER_HIGH; layer <= RAF_LAYER_HAL; layer++) {
         printf("%s:\n", raf_layer_name(layer));
-        for (size_t i = 0; i < count; i++) {
+        for (unsigned int i = 0; i < count; i++) {
             if (modules[i].layer == layer) {
                 printf("  - %s: %s\n", modules[i].name, modules[i].description);
             }

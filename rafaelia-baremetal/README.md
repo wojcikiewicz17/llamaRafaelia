@@ -188,7 +188,7 @@ const raf_system_identity *identity = raf_system_identity_get();
 printf("RF_ID: %s\\n", identity->rf_id);
 
 const raf_module_info *modules = NULL;
-size_t count = raf_system_list_modules(&modules);
+unsigned int count = raf_system_list_modules(&modules);
 ```
 
 ### Documentation
