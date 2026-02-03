@@ -333,6 +333,12 @@ struct common_params {
     std::string lookup_cache_static  = ""; // path of static ngram cache file for lookup decoding           // NOLINT
     std::string lookup_cache_dynamic = ""; // path of dynamic ngram cache file for lookup decoding          // NOLINT
     std::string logits_file          = ""; // file for saving *all* logits                                  // NOLINT
+    std::string smart_guard_policy   = ""; // path to smart guard policy file                              // NOLINT
+    std::string smart_guard_mode     = "block"; // smart guard mode: warn|block                             // NOLINT
+    std::string smart_guard_log      = ""; // path to smart guard local log                                // NOLINT
+    std::string rafstore_cache_dir   = ""; // rafstore cache directory                                     // NOLINT
+    int32_t rafstore_prefetch_window_mb = 64; // rafstore prefetch window in MB                             // NOLINT
+    std::string rafstore_prefetch_strategy = "sequential"; // rafstore prefetch strategy                    // NOLINT
 
     std::vector<std::string> in_files;   // all input files
     std::vector<std::string> antiprompt; // strings upon which more user input is prompted (a.k.a. reverse prompts)
@@ -348,6 +354,8 @@ struct common_params {
     int32_t control_vector_layer_start = -1; // layer range for control vector
     int32_t control_vector_layer_end   = -1; // layer range for control vector
     bool    offline                    = false;
+
+    bool    smart_guard = true;
 
     int32_t ppl_stride      = 0;     // stride for perplexity calculations. If left at 0, the pre-existing approach will be used.
     int32_t ppl_output_type = 0;     // = 0 -> ppl output is as usual, = 1 -> ppl output is num_tokens, ppl, one per line

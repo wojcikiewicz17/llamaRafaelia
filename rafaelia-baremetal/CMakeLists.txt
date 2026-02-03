@@ -43,6 +43,7 @@ if(RAFAELIA_BAREMETAL)
         ${CMAKE_CURRENT_SOURCE_DIR}/toroid
         ${CMAKE_CURRENT_SOURCE_DIR}/hardware
         ${CMAKE_CURRENT_SOURCE_DIR}/rafaelia
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
     # Core library sources
@@ -108,6 +109,12 @@ if(RAFAELIA_BAREMETAL)
         rafaelia/raf_rafaelia_math.c
         rafaelia/raf_rafaelia_math.h
     )
+
+    # LLaMA integration bridge sources
+    set(RAFAELIA_LLAMA_BRIDGE_SOURCES
+        rafaelia/raf_llama_bridge.c
+        include/rafaelia.h
+    )
     
     # Create static library combining all modules
     add_library(rafaelia-baremetal STATIC
@@ -120,6 +127,12 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_HARDWARE_SOURCES}
         ${RAFAELIA_UTILS_SOURCES}
         ${RAFAELIA_MODULE_SOURCES}
+        ${RAFAELIA_LLAMA_BRIDGE_SOURCES}
+    )
+
+    target_include_directories(rafaelia-baremetal PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
     # Link math library if needed
@@ -143,6 +156,7 @@ if(RAFAELIA_BAREMETAL)
         rafaelia/raf_rafaelia_vector.h
         rafaelia/raf_rafaelia_core.h
         rafaelia/raf_rafaelia_math.h
+        include/rafaelia.h
         DESTINATION include/rafaelia-baremetal
     )
     
@@ -172,6 +186,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"rafaelia/raf_rafaelia_vector.h\"
 #include \"rafaelia/raf_rafaelia_core.h\"
 #include \"rafaelia/raf_rafaelia_math.h\"
+#include \"rafaelia.h\"
 
 #endif /* RAFAELIA_BAREMETAL_H */
 "

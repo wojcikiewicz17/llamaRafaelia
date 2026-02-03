@@ -7,6 +7,11 @@
 #include "llama.h"
 #include "chat.h"
 
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+#include "rafaelia.h"
+#endif
+
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -63,6 +68,30 @@ static bool file_is_empty(const std::string & path) {
     return f.tellg() == 0;
 }
 
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+static std::string smart_guard_event_json(const smart_guard::result & res, const common_params & params) {
+    const auto now = std::chrono::system_clock::now();
+    const auto epoch = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+
+    std::ostringstream oss;
+    oss << "{\"timestamp\":" << epoch
+        << ",\"model\":\"" << params.model.path << "\""
+        << ",\"action\":\"" << smart_guard::action_to_string(res.action_taken) << "\""
+        << ",\"reason_code\":\"" << res.reason_code << "\""
+        << ",\"categories\":[";
+
+    for (size_t i = 0; i < res.categories.size(); ++i) {
+        if (i > 0) {
+            oss << ",";
+        }
+        oss << "\"" << res.categories[i] << "\"";
+    }
+
+    oss << "],\"normalized_prompt_digest\":\"" << res.normalized_prompt_digest << "\"}";
+    return oss.str();
+}
+#endif
+
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined (_WIN32)
 static void sigint_handler(int signo) {
     if (signo == SIGINT) {
@@ -90,6 +119,12 @@ int main(int argc, char ** argv) {
     if (!common_params_parse(argc, argv, params, LLAMA_EXAMPLE_MAIN, print_usage)) {
         return 1;
     }
+
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+    if (!params.smart_guard_log.empty()) {
+        bitstack_set_log_path(params.smart_guard_log.c_str());
+    }
+#endif
 
     common_init();
 
@@ -304,12 +339,23 @@ int main(int argc, char ** argv) {
             prompt = params.prompt;
         }
 
-        if (!prompt.empty()) {
+        if (!prompt.empty() && params.smart_guard) {
             smart_guard::metadata guard_meta;
+            if (!params.smart_guard_policy.empty()) {
+                guard_meta.fields["policy_path"] = params.smart_guard_policy;
+            }
             smart_guard::result guard_result = smart_guard::evaluate(prompt, guard_meta);
+            guard_result = smart_guard::apply_mode(guard_result, smart_guard::mode_from_string(params.smart_guard_mode));
             if (guard_result.action_taken != smart_guard::action::allow) {
-                LOG("%s\n", smart_guard::render_message(guard_result).c_str());
-                return 0;
+                LOG("%s\n", smart_guard::render_metadata_json(guard_result).c_str());
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+                if (!params.smart_guard_log.empty()) {
+                    bitstack_append(smart_guard_event_json(guard_result, params).c_str());
+                }
+#endif
+                if (guard_result.action_taken == smart_guard::action::block) {
+                    return 0;
+                }
             }
         }
 
@@ -894,14 +940,27 @@ int main(int argc, char ** argv) {
                 if (buffer.empty()) { // Enter key on empty line lets the user pass control back
                     LOG_DBG("empty line, passing control back\n");
                 } else { // Add tokens to embd only if the input buffer is non-empty
-                    smart_guard::metadata guard_meta;
-                    smart_guard::result guard_result = smart_guard::evaluate(buffer, guard_meta);
-                    if (guard_result.action_taken != smart_guard::action::allow) {
-                        console::set_display(console::error);
-                        LOG("%s\n", smart_guard::render_message(guard_result).c_str());
-                        console::set_display(console::reset);
-                        is_interacting = true;
-                        continue;
+                    if (params.smart_guard) {
+                        smart_guard::metadata guard_meta;
+                        if (!params.smart_guard_policy.empty()) {
+                            guard_meta.fields["policy_path"] = params.smart_guard_policy;
+                        }
+                        smart_guard::result guard_result = smart_guard::evaluate(buffer, guard_meta);
+                        guard_result = smart_guard::apply_mode(guard_result, smart_guard::mode_from_string(params.smart_guard_mode));
+                        if (guard_result.action_taken != smart_guard::action::allow) {
+                            console::set_display(console::error);
+                            LOG("%s\n", smart_guard::render_metadata_json(guard_result).c_str());
+                            console::set_display(console::reset);
+#if defined(RAFAELIA_BAREMETAL_ENABLED)
+                            if (!params.smart_guard_log.empty()) {
+                                bitstack_append(smart_guard_event_json(guard_result, params).c_str());
+                            }
+#endif
+                            if (guard_result.action_taken == smart_guard::action::block) {
+                                is_interacting = true;
+                                continue;
+                            }
+                        }
                     }
 
                     // append input suffix if any

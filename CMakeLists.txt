@@ -203,9 +203,10 @@ if (LLAMA_BUILD_COMMON)
 endif()
 
 # Rafaelia Baremetal Module
-option(RAFAELIA_BAREMETAL "Build Rafaelia Baremetal Module" ON)
+option(RAFAELIA_BAREMETAL "Build Rafaelia Baremetal Module" OFF)
 if (RAFAELIA_BAREMETAL)
     message(STATUS "Building with Rafaelia Baremetal Module")
+    add_compile_definitions(RAFAELIA_BAREMETAL_ENABLED)
     add_subdirectory(rafaelia-baremetal)
 endif()
 

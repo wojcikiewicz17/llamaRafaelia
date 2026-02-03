@@ -2101,6 +2101,64 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         }
     ).set_examples({LLAMA_EXAMPLE_MAIN}));
     add_opt(common_arg(
+        {"--smart-guard"}, "<on|off>",
+        string_format("enable smart guard (default: %s)", params.smart_guard ? "on" : "off"),
+        [](common_params & params, const std::string & value) {
+            if (is_truthy(value)) {
+                params.smart_guard = true;
+            } else if (is_falsey(value)) {
+                params.smart_guard = false;
+            } else {
+                throw std::runtime_error("error: invalid value for --smart-guard (use on|off)");
+            }
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--smart-guard-policy"}, "FNAME",
+        "path to smart guard policy file",
+        [](common_params & params, const std::string & value) {
+            params.smart_guard_policy = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--smart-guard-mode"}, "<warn|block>",
+        string_format("smart guard mode (default: %s)", params.smart_guard_mode.c_str()),
+        [](common_params & params, const std::string & value) {
+            if (value != "warn" && value != "block") {
+                throw std::runtime_error("error: invalid value for --smart-guard-mode (use warn|block)");
+            }
+            params.smart_guard_mode = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--smart-guard-log"}, "FNAME",
+        "path to smart guard local log (bitstack append)",
+        [](common_params & params, const std::string & value) {
+            params.smart_guard_log = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_MAIN, LLAMA_EXAMPLE_SERVER}));
+    add_opt(common_arg(
+        {"--rafstore-cache-dir"}, "DIR",
+        "rafstore cache directory (default: empty)",
+        [](common_params & params, const std::string & value) {
+            params.rafstore_cache_dir = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_MAIN}));
+    add_opt(common_arg(
+        {"--rafstore-prefetch-window"}, "N",
+        string_format("rafstore prefetch window in MB (default: %d)", params.rafstore_prefetch_window_mb),
+        [](common_params & params, int value) {
+            params.rafstore_prefetch_window_mb = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_MAIN}));
+    add_opt(common_arg(
+        {"--rafstore-prefetch-strategy"}, "STR",
+        string_format("rafstore prefetch strategy (default: %s)", params.rafstore_prefetch_strategy.c_str()),
+        [](common_params & params, const std::string & value) {
+            params.rafstore_prefetch_strategy = value;
+        }
+    ).set_examples({LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_MAIN}));
+    add_opt(common_arg(
         {"-r", "--reverse-prompt"}, "PROMPT",
         "halt generation at PROMPT, return control in interactive mode\n",
         [](common_params & params, const std::string & value) {
