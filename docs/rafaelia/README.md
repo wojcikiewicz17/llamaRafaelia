@@ -19,6 +19,7 @@ docs/rafaelia/
 
 - **Specs**
   - [BitStack World Model v1](specs/SPEC_BITSTACK_WORLD_MODEL_V1.md)
+  - [Geometry Nucleus v1](specs/SPEC_GEOMETRY_NUCLEUS_V1.md)
   - [Smart Guard v1](specs/SPEC_SMART_GUARD_V1.md)
 - **Design**
   - [Rafaelia architecture](design/LLAMA_RAFAELIA_DESIGN.md)

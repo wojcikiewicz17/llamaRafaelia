@@ -41,6 +41,7 @@ if(RAFAELIA_BAREMETAL)
         ${CMAKE_CURRENT_SOURCE_DIR}/zipraf
         ${CMAKE_CURRENT_SOURCE_DIR}/rafstore
         ${CMAKE_CURRENT_SOURCE_DIR}/toroid
+        ${CMAKE_CURRENT_SOURCE_DIR}/geometry
         ${CMAKE_CURRENT_SOURCE_DIR}/hardware
         ${CMAKE_CURRENT_SOURCE_DIR}/rafaelia
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -87,6 +88,12 @@ if(RAFAELIA_BAREMETAL)
         toroid/raf_toroid.c
         toroid/raf_toroid.h
     )
+
+    # Geometry nucleus sources
+    set(RAFAELIA_GEOMETRY_SOURCES
+        geometry/raf_geometry.c
+        geometry/raf_geometry.h
+    )
     
     # Hardware detection sources
     set(RAFAELIA_HARDWARE_SOURCES
@@ -124,6 +131,7 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_ZIPRAF_SOURCES}
         ${RAFAELIA_RAFSTORE_SOURCES}
         ${RAFAELIA_TOROID_SOURCES}
+        ${RAFAELIA_GEOMETRY_SOURCES}
         ${RAFAELIA_HARDWARE_SOURCES}
         ${RAFAELIA_UTILS_SOURCES}
         ${RAFAELIA_MODULE_SOURCES}
@@ -151,6 +159,7 @@ if(RAFAELIA_BAREMETAL)
         rafstore/raf_rafstore.h
         rafstore/raf_hd_cache.h
         toroid/raf_toroid.h
+        geometry/raf_geometry.h
         hardware/raf_hardware.h
         utils/raf_utils.h
         rafaelia/raf_rafaelia_vector.h
@@ -181,6 +190,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"rafstore/raf_rafstore.h\"
 #include \"rafstore/raf_hd_cache.h\"
 #include \"toroid/raf_toroid.h\"
+#include \"geometry/raf_geometry.h\"
 #include \"hardware/raf_hardware.h\"
 #include \"utils/raf_utils.h\"
 #include \"rafaelia/raf_rafaelia_vector.h\"
