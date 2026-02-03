@@ -60,6 +60,22 @@ witness_report verify_q4_block(const q4_block_view & view, const witness_config 
     return report;
 }
 
+witness_report verify_q4_block(q4_block_mut_view & view, const witness_config & config) {
+    const q4_block_view ro_view{
+        view.weights,
+        view.weights_bytes,
+        view.meta,
+        view.meta_bytes,
+        view.witness,
+    };
+    witness_report report = verify_q4_block(ro_view, config);
+    if (!report.ok) {
+        apply_fallback(view.weights, view.weights_bytes, config.fallback);
+        apply_fallback(view.meta, view.meta_bytes, config.fallback);
+    }
+    return report;
+}
+
 void warmup_pages(const void * data, size_t size) {
     if (!data || size == 0) {
         return;
