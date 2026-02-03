@@ -4,9 +4,9 @@ llama_add_compile_flags()
 # libraries
 #
 
-# llama
+# llama core (low-level, no model-specific implementations)
 
-add_library(llama
+set(LLAMA_CORE_SOURCES
             ../include/llama.h
             llama.cpp
             llama-adapter.cpp
@@ -15,7 +15,6 @@ add_library(llama
             llama-chat.cpp
             llama-context.cpp
             llama-cparams.cpp
-            llama-grammar.cpp
             llama-graph.cpp
             llama-hparams.cpp
             llama-impl.cpp
@@ -35,6 +34,17 @@ add_library(llama
             unicode-data.cpp
             unicode.cpp
             unicode.h
+)
+
+# llama grammar (deterministic parsing layer)
+
+set(LLAMA_GRAMMAR_SOURCES
+            llama-grammar.cpp
+)
+
+# llama model implementations (high-level, legacy/compat layers)
+
+set(LLAMA_MODEL_SOURCES
             models/apertus.cpp
             models/arcee.cpp
             models/arctic.cpp
@@ -129,15 +139,39 @@ add_library(llama
             models/wavtokenizer-dec.cpp
             models/xverse.cpp
             models/graph-context-mamba.cpp
-            )
+)
+
+add_library(llama-lowlevel STATIC
+            ${LLAMA_CORE_SOURCES}
+)
+
+target_include_directories(llama-lowlevel PRIVATE .)
+target_include_directories(llama-lowlevel PUBLIC ../include)
+target_compile_features   (llama-lowlevel PRIVATE cxx_std_17) # don't bump
+target_link_libraries(llama-lowlevel PUBLIC ggml)
+
+add_library(llama
+            ${LLAMA_MODEL_SOURCES}
+)
+
+add_library(llama-grammar STATIC
+            ${LLAMA_GRAMMAR_SOURCES}
+)
+
+target_include_directories(llama-grammar PRIVATE .)
+target_include_directories(llama-grammar PUBLIC ../include)
+target_compile_features   (llama-grammar PRIVATE cxx_std_17) # don't bump
+target_link_libraries(llama-grammar PUBLIC llama-lowlevel)
+
+target_link_libraries(llama PUBLIC llama-grammar llama-lowlevel)
 
 target_include_directories(llama PRIVATE .)
 target_include_directories(llama PUBLIC ../include)
 target_compile_features   (llama PRIVATE cxx_std_17) # don't bump
 
-target_link_libraries(llama PUBLIC ggml)
-
 if (BUILD_SHARED_LIBS)
+    set_target_properties(llama-lowlevel PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(llama-grammar PROPERTIES POSITION_INDEPENDENT_CODE ON)
     set_target_properties(llama PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(llama PRIVATE LLAMA_BUILD)
     target_compile_definitions(llama PUBLIC  LLAMA_SHARED)
