@@ -43,6 +43,7 @@ if(RAFAELIA_BAREMETAL)
         ${CMAKE_CURRENT_SOURCE_DIR}/toroid
         ${CMAKE_CURRENT_SOURCE_DIR}/geometry
         ${CMAKE_CURRENT_SOURCE_DIR}/hardware
+        ${CMAKE_CURRENT_SOURCE_DIR}/diagram
         ${CMAKE_CURRENT_SOURCE_DIR}/rafaelia
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -100,6 +101,12 @@ if(RAFAELIA_BAREMETAL)
         hardware/raf_hardware.c
         hardware/raf_hardware.h
     )
+
+    # Diagram primitives sources
+    set(RAFAELIA_DIAGRAM_SOURCES
+        diagram/raf_diagram.c
+        diagram/raf_diagram.h
+    )
     
     # Utility tools sources (42 tools)
     set(RAFAELIA_UTILS_SOURCES
@@ -133,6 +140,7 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_TOROID_SOURCES}
         ${RAFAELIA_GEOMETRY_SOURCES}
         ${RAFAELIA_HARDWARE_SOURCES}
+        ${RAFAELIA_DIAGRAM_SOURCES}
         ${RAFAELIA_UTILS_SOURCES}
     )
 
@@ -177,6 +185,7 @@ if(RAFAELIA_BAREMETAL)
         toroid/raf_toroid.h
         geometry/raf_geometry.h
         hardware/raf_hardware.h
+        diagram/raf_diagram.h
         utils/raf_utils.h
         rafaelia/raf_rafaelia_vector.h
         rafaelia/raf_rafaelia_core.h
@@ -208,6 +217,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"toroid/raf_toroid.h\"
 #include \"geometry/raf_geometry.h\"
 #include \"hardware/raf_hardware.h\"
+#include \"diagram/raf_diagram.h\"
 #include \"utils/raf_utils.h\"
 
 #endif /* RAFAELIA_BAREMETAL_LOWLEVEL_H */
