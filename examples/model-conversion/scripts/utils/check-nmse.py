@@ -1,47 +1,20 @@
 #!/usr/bin/env python3
 
-import numpy as np
 import sys
 import os
 import argparse
+import math
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from utils.lowlevel_tensor import load_f32, mean_abs_diff, max_abs_diff, nmse
+
 def calculate_nmse(reference, test):
-    mse = np.mean((test - reference) ** 2)
-    ref_var = np.var(reference)
-    if ref_var == 0:
-        nmse = float('inf') if mse > 0 else 0.0
-        return mse, mse, ref_var
-
-    nmse = mse / ref_var
-
-    return nmse, mse, ref_var
+    return nmse(reference, test)
 
 def load_logits(file_path):
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    if file_path.suffix == '.npy':
-        return np.load(file_path)
-    elif file_path.suffix == '.bin':
-        return np.fromfile(file_path, dtype=np.float32)
-    else:
-        # Try to load as text file
-        try:
-            # If it has index format "0: value", extract just values
-            data = []
-            with open(file_path, 'r') as f:
-                for line in f:
-                    if ':' in line:
-                        # Format: "index: value"
-                        value = float(line.split(':')[1].strip())
-                    else:
-                        # Just the value
-                        value = float(line.strip())
-                    data.append(value)
-            return np.array(data, dtype=np.float32)
-        except:
-            return np.loadtxt(file_path, dtype=np.float32)
+    return load_f32(file_path)
 
 def interpret_nmse(nmse):
     """Provide interpretation of NMSE value"""
@@ -89,11 +62,11 @@ def main():
     try:
         print("Loading reference logits...")
         reference = load_logits(reference_file)
-        print(f"  Shape: {reference.shape}, Type: {reference.dtype}")
+        print(f"  Shape: {reference.shape}, Type: f32")
 
         print("Loading test logits...")
         test = load_logits(test_file)
-        print(f"  Shape: {test.shape}, Type: {test.dtype}")
+        print(f"  Shape: {test.shape}, Type: f32")
 
         # Check shapes match
         if reference.shape != test.shape:
@@ -104,28 +77,28 @@ def main():
 
         print(f"\n✅ Shapes match: {reference.shape}")
 
-        nmse, mse, ref_var = calculate_nmse(reference, test)
+        nmse_value, mse, ref_var = calculate_nmse(reference.data, test.data)
 
         # Additional metrics
-        max_abs_error = np.max(np.abs(test - reference))
-        mean_abs_error = np.mean(np.abs(test - reference))
+        max_abs_error = max_abs_diff(reference.data, test.data)
+        mean_abs_error = mean_abs_diff(reference.data, test.data)
 
         # Results
         print(f"\n📈 METRICS")
         print("=" * 30)
         print(f"MSE (Mean Squared Error):     {mse:.6e}")
         print(f"Reference Variance:           {ref_var:.6e}")
-        print(f"NMSE:                         {nmse:.6e}")
+        print(f"NMSE:                         {nmse_value:.6e}")
         print(f"Max Absolute Error:           {max_abs_error:.6f}")
         print(f"Mean Absolute Error:          {mean_abs_error:.6f}")
 
         # NMSE in dB (common in signal processing)
-        if nmse > 0:
-            nmse_db = 10 * np.log10(nmse)
+        if nmse_value > 0:
+            nmse_db = 10 * math.log10(nmse_value)
             print(f"NMSE (dB):                    {nmse_db:.2f} dB")
 
         # Interpretation
-        interpretation, emoji = interpret_nmse(nmse)
+        interpretation, emoji = interpret_nmse(nmse_value)
         print(f"\n🎯 INTERPRETATION")
         print("=" * 30)
         print(f"{emoji} {interpretation}")
@@ -133,13 +106,13 @@ def main():
         # Detailed guidance
         print(f"\n📋 GUIDANCE")
         print("=" * 30)
-        if nmse < 1e-3:
+        if nmse_value < 1e-3:
             print("✅ EXCELLENT: Your GGML conversion is working very well!")
             print("   The differences are negligible for practical use.")
-        elif nmse < 1e-2:
+        elif nmse_value < 1e-2:
             print("👍 GOOD: Your GGML conversion is working well.")
             print("   Small differences are likely due to precision/quantization.")
-        elif nmse < 0.1:
+        elif nmse_value < 0.1:
             print("⚠️  ACCEPTABLE: Conversion is working but with some differences.")
             print("   Check if you're using quantization (Q4, Q8, etc.)")
             print("   Test generation quality to see if it's acceptable.")
@@ -159,11 +132,11 @@ def main():
         print("> 1.0:   Poor (worse than random)")
 
         # Exit code based on NMSE
-        if nmse < 1e-2:
-            print(f"\n✅ RESULT: PASS (NMSE = {nmse:.2e})")
+        if nmse_value < 1e-2:
+            print(f"\n✅ RESULT: PASS (NMSE = {nmse_value:.2e})")
             sys.exit(0)
         else:
-            print(f"\n❌ RESULT: NEEDS REVIEW (NMSE = {nmse:.2e})")
+            print(f"\n❌ RESULT: NEEDS REVIEW (NMSE = {nmse_value:.2e})")
             sys.exit(1)
 
     except Exception as e:

@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
-import numpy as np
 import sys
 import os
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from utils.lowlevel_tensor import load_f32, max_abs_diff, topk_indices
 
 def quick_logits_check(pytorch_file, llamacpp_file):
     """Lightweight sanity check before NMSE"""
 
     try:
-        pytorch_logits = np.fromfile(pytorch_file, dtype=np.float32)
-        llamacpp_logits = np.fromfile(llamacpp_file, dtype=np.float32)
+        pytorch_logits = load_f32(pytorch_file)
+        llamacpp_logits = load_f32(llamacpp_file)
     except Exception as e:
         print(f"❌ NOK: Failed to load files - {e}")
         return False
@@ -20,16 +23,13 @@ def quick_logits_check(pytorch_file, llamacpp_file):
         print(f"❌ NOK: Shape mismatch - PyTorch: {pytorch_logits.shape}, llama.cpp: {llamacpp_logits.shape}")
         return False
 
-    # Calculate key metrics
-    diff = pytorch_logits - llamacpp_logits
-    abs_diff = np.abs(diff)
-    max_diff = np.max(abs_diff)
+    max_diff = max_abs_diff(pytorch_logits.data, llamacpp_logits.data)
 
     # Get top 10 predictions from both models
-    pytorch_top10 = np.argsort(pytorch_logits)[-10:][::-1]
-    llamacpp_top10 = np.argsort(llamacpp_logits)[-10:][::-1]
-    print(f"Top 10 PyTorch logits: {pytorch_logits[pytorch_top10]}")
-    print(f"Top 10 llama.cpp logits: {llamacpp_logits[llamacpp_top10]}")
+    pytorch_top10 = topk_indices(pytorch_logits.data, 10)
+    llamacpp_top10 = topk_indices(llamacpp_logits.data, 10)
+    print(f"Top 10 PyTorch logits: {[pytorch_logits.data[i] for i in pytorch_top10]}")
+    print(f"Top 10 llama.cpp logits: {[llamacpp_logits.data[i] for i in llamacpp_top10]}")
     print(f"Max absolute difference: {max_diff:.4f}")
 
     if max_diff > 1.0:
