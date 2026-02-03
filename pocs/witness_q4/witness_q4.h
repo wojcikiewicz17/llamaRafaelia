@@ -24,6 +24,14 @@ struct q4_block_view {
     uint32_t witness = 0;
 };
 
+struct q4_block_mut_view {
+    uint8_t * weights = nullptr;
+    size_t weights_bytes = 0;
+    uint8_t * meta = nullptr;
+    size_t meta_bytes = 0;
+    uint32_t witness = 0;
+};
+
 struct witness_config {
     witness_mode mode = witness_mode::xor_fold;
     bool warmup = false;
@@ -39,6 +47,7 @@ uint32_t compute_witness(const uint8_t * data, size_t size, witness_mode mode);
 uint32_t compute_q4_witness(const q4_block_view & view, witness_mode mode);
 
 witness_report verify_q4_block(const q4_block_view & view, const witness_config & config);
+witness_report verify_q4_block(q4_block_mut_view & view, const witness_config & config);
 
 void warmup_pages(const void * data, size_t size);
 void apply_fallback(uint8_t * data, size_t size, fallback_mode mode);
