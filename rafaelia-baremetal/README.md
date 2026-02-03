@@ -39,6 +39,7 @@ This module contains original implementations by Rafael Melo Reis and is also pr
 - **toroid/**: Toroidal topology implementations
 - **hardware/**: Hardware detection and register access
 - **utils/**: Collection of 42 specialized utility tools
+- **core/raf_system.{h,c}**: Architecture registry and RF_ID identity map
 
 ### NEW: BITSTACK Module
 
@@ -174,6 +175,20 @@ int main(void) {
     raf_matrix_destroy(m);
     return 0;
 }
+```
+
+### Architecture Registry (RF_ID)
+
+The system registry exposes the module hierarchy described in the architecture diagram:
+
+```c
+#include "core/raf_system.h"
+
+const raf_system_identity *identity = raf_system_identity_get();
+printf("RF_ID: %s\\n", identity->rf_id);
+
+const raf_module_info *modules = NULL;
+unsigned int count = raf_system_list_modules(&modules);
 ```
 
 ### Documentation
