@@ -8,6 +8,7 @@
  */
 
 #include "core/raf_core.h"
+#include "core/raf_platform.h"
 #include "core/raf_system.h"
 #include "bitraf/raf_bitraf.h"
 #include "zipraf/raf_zipraf.h"
@@ -63,6 +64,18 @@ void example_system_modules(void) {
             }
         }
     }
+}
+
+void example_platform_primitives(void) {
+    printf("\n=== Platform Primitives (Baremetal) ===\n");
+
+    char buffer[32];
+    const char *message = "Rafaelia";
+
+    raf_platform_memset(buffer, 0, sizeof(buffer));
+    raf_platform_strncpy(buffer, message, sizeof(buffer) - 1);
+
+    printf("Buffer: %s (len=%u)\n", buffer, raf_platform_strlen(buffer));
 }
 
 void example_matrix_operations(void) {
@@ -195,6 +208,7 @@ int main(void) {
 
     example_system_identity();
     example_system_modules();
+    example_platform_primitives();
     example_hardware_detection();
     example_matrix_operations();
     example_bitraf_operations();

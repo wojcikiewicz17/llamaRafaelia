@@ -40,6 +40,7 @@ This module contains original implementations by Rafael Melo Reis and is also pr
 - **hardware/**: Hardware detection and register access
 - **utils/**: Collection of 42 specialized utility tools
 - **core/raf_system.{h,c}**: Architecture registry and RF_ID identity map
+- **core/raf_platform.{h,c}**: Dependency-free libc-style primitives (mem/string)
 
 ### NEW: BITSTACK Module
 
