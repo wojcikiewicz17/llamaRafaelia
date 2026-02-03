@@ -4,6 +4,7 @@
 #include "log.h"
 #include "sampling.h"
 #include "smart_guard.h"
+#include "bitstack_log.h"
 #include "llama.h"
 #include "chat.h"
 
@@ -68,6 +69,13 @@ static bool file_is_empty(const std::string & path) {
     return f.tellg() == 0;
 }
 
+static std::string resolve_bitstack_log_path(const common_params & params) {
+    if (!params.bitstack_log.empty()) {
+        return params.bitstack_log;
+    }
+    return params.smart_guard_log;
+}
+
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
 static std::string smart_guard_event_json(const smart_guard::result & res, const common_params & params) {
     const auto now = std::chrono::system_clock::now();
@@ -121,10 +129,14 @@ int main(int argc, char ** argv) {
     }
 
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
-    if (!params.smart_guard_log.empty()) {
-        bitstack_set_log_path(params.smart_guard_log.c_str());
+    const std::string bitstack_log_path = resolve_bitstack_log_path(params);
+    if (!bitstack_log_path.empty()) {
+        bitstack_set_log_path(bitstack_log_path.c_str());
     }
 #endif
+    if (!resolve_bitstack_log_path(params).empty()) {
+        bs_init(resolve_bitstack_log_path(params).c_str());
+    }
 
     common_init();
 
@@ -339,6 +351,11 @@ int main(int argc, char ** argv) {
             prompt = params.prompt;
         }
 
+        if (!prompt.empty()) {
+            std::string msg = "len=" + std::to_string(prompt.size());
+            bs_event("prompt", 0, msg.c_str());
+        }
+
         if (!prompt.empty() && params.smart_guard) {
             smart_guard::metadata guard_meta;
             if (!params.smart_guard_policy.empty()) {
@@ -349,10 +366,13 @@ int main(int argc, char ** argv) {
             if (guard_result.action_taken != smart_guard::action::allow) {
                 LOG("%s\n", smart_guard::render_metadata_json(guard_result).c_str());
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
-                if (!params.smart_guard_log.empty()) {
+                if (!resolve_bitstack_log_path(params).empty()) {
                     bitstack_append(smart_guard_event_json(guard_result, params).c_str());
                 }
 #endif
+                bs_event("smart_guard_action",
+                         static_cast<int>(guard_result.action_taken),
+                         guard_result.reason_code.c_str());
                 if (guard_result.action_taken == smart_guard::action::block) {
                     return 0;
                 }
@@ -940,6 +960,8 @@ int main(int argc, char ** argv) {
                 if (buffer.empty()) { // Enter key on empty line lets the user pass control back
                     LOG_DBG("empty line, passing control back\n");
                 } else { // Add tokens to embd only if the input buffer is non-empty
+                    std::string msg = "len=" + std::to_string(buffer.size());
+                    bs_event("prompt", 0, msg.c_str());
                     if (params.smart_guard) {
                         smart_guard::metadata guard_meta;
                         if (!params.smart_guard_policy.empty()) {
@@ -952,10 +974,13 @@ int main(int argc, char ** argv) {
                             LOG("%s\n", smart_guard::render_metadata_json(guard_result).c_str());
                             console::set_display(console::reset);
 #if defined(RAFAELIA_BAREMETAL_ENABLED)
-                            if (!params.smart_guard_log.empty()) {
+                            if (!resolve_bitstack_log_path(params).empty()) {
                                 bitstack_append(smart_guard_event_json(guard_result, params).c_str());
                             }
 #endif
+                            bs_event("smart_guard_action",
+                                     static_cast<int>(guard_result.action_taken),
+                                     guard_result.reason_code.c_str());
                             if (guard_result.action_taken == smart_guard::action::block) {
                                 is_interacting = true;
                                 continue;
