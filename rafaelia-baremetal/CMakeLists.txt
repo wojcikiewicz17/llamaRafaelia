@@ -122,9 +122,9 @@ if(RAFAELIA_BAREMETAL)
         rafaelia/raf_llama_bridge.c
         include/rafaelia.h
     )
-    
-    # Create static library combining all modules
-    add_library(rafaelia-baremetal STATIC
+
+    # Low-level baremetal sources (no legacy/bridge layers)
+    set(RAFAELIA_LOWLEVEL_SOURCES
         ${RAFAELIA_CORE_SOURCES}
         ${RAFAELIA_BITRAF_SOURCES}
         ${RAFAELIA_BITSTACK_SOURCES}
@@ -134,6 +134,20 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_GEOMETRY_SOURCES}
         ${RAFAELIA_HARDWARE_SOURCES}
         ${RAFAELIA_UTILS_SOURCES}
+    )
+
+    # Create low-level baremetal library
+    add_library(rafaelia-baremetal-lowlevel STATIC
+        ${RAFAELIA_LOWLEVEL_SOURCES}
+    )
+
+    target_include_directories(rafaelia-baremetal-lowlevel PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    # Create full baremetal library (low-level + RAFAELIA modules + LLaMA bridge)
+    add_library(rafaelia-baremetal STATIC
         ${RAFAELIA_MODULE_SOURCES}
         ${RAFAELIA_LLAMA_BRIDGE_SOURCES}
     )
@@ -142,10 +156,12 @@ if(RAFAELIA_BAREMETAL)
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+
+    target_link_libraries(rafaelia-baremetal PUBLIC rafaelia-baremetal-lowlevel)
     
     # Link math library if needed
     if(UNIX AND NOT APPLE)
-        target_link_libraries(rafaelia-baremetal m)
+        target_link_libraries(rafaelia-baremetal-lowlevel PUBLIC m)
     endif()
     
     # Install headers
@@ -169,18 +185,42 @@ if(RAFAELIA_BAREMETAL)
         DESTINATION include/rafaelia-baremetal
     )
     
-    # Install library
-    install(TARGETS rafaelia-baremetal
+    # Install libraries
+    install(TARGETS rafaelia-baremetal-lowlevel rafaelia-baremetal
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
     )
     
+    # Create a master header for low-level baremetal
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/rafaelia_baremetal_lowlevel.h
+"/* Rafaelia Baremetal Low-Level - Master Header */
+#ifndef RAFAELIA_BAREMETAL_LOWLEVEL_H
+#define RAFAELIA_BAREMETAL_LOWLEVEL_H
+
+#include \"core/raf_core.h\"
+#include \"core/raf_platform.h\"
+#include \"core/raf_system.h\"
+#include \"bitraf/raf_bitraf.h\"
+#include \"bitstack/raf_bitstack.h\"
+#include \"zipraf/raf_zipraf.h\"
+#include \"rafstore/raf_rafstore.h\"
+#include \"rafstore/raf_hd_cache.h\"
+#include \"toroid/raf_toroid.h\"
+#include \"geometry/raf_geometry.h\"
+#include \"hardware/raf_hardware.h\"
+#include \"utils/raf_utils.h\"
+
+#endif /* RAFAELIA_BAREMETAL_LOWLEVEL_H */
+"
+    )
+
     # Create a master header for convenience
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/rafaelia_baremetal.h
 "/* Rafaelia Baremetal - Master Header */
 #ifndef RAFAELIA_BAREMETAL_H
 #define RAFAELIA_BAREMETAL_H
 
+#include \"rafaelia_baremetal_lowlevel.h\"
 #include \"core/raf_core.h\"
 #include \"core/raf_platform.h\"
 #include \"core/raf_system.h\"
@@ -202,7 +242,9 @@ if(RAFAELIA_BAREMETAL)
 "
     )
     
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rafaelia_baremetal.h
+    install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/rafaelia_baremetal_lowlevel.h
+        ${CMAKE_CURRENT_BINARY_DIR}/rafaelia_baremetal.h
         DESTINATION include
     )
     

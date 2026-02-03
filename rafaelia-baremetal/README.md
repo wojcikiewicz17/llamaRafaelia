@@ -42,6 +42,16 @@ This module contains original implementations by Rafael Melo Reis and is also pr
 - **core/raf_system.{h,c}**: Architecture registry and RF_ID identity map
 - **core/raf_platform.{h,c}**: Dependency-free libc-style primitives (mem/string)
 
+### Low-Level Grouping (No Legacy/Bridge Layers)
+
+To reduce cross-dependencies and keep a strict baremetal surface, the module now ships with a dedicated low-level library:
+
+- **Library:** `librafaelia-baremetal-lowlevel.a`
+- **Header:** `rafaelia_baremetal_lowlevel.h`
+- **Scope:** core, bitraf, bitstack, zipraf, rafstore, toroid, geometry, hardware, utils
+
+This low-level target excludes the RAFAELIA formulas/vectors and the LLaMA bridge, keeping only deterministic, dependency-free building blocks.
+
 ### NEW: BITSTACK Module
 
 The **bitstack/** module implements non-linear logic operations using bit-stack methodology:
@@ -110,6 +120,20 @@ cmake --build build --config Release
 - Container images
 - Binary distribution
 - Academic/research environments with diverse hardware
+
+### Low-Level Usage (Minimal Dependencies)
+
+```c
+#include "rafaelia_baremetal_lowlevel.h"
+```
+
+Link against the low-level static library:
+
+```bash
+cmake -B build -DRAFAELIA_BAREMETAL=ON
+cmake --build build --config Release
+# Link with: -lrafaelia-baremetal-lowlevel
+```
 
 ## Platform Compatibility
 
