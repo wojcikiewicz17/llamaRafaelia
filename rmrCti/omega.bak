@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -e
+cmd="${1:-}"; shift || true
+
+A_TXT="omega_hot_rank.txt"
+B_TXT="omega_threads_rank.txt"
+C_TXT="omega_cross_hot_rank.txt"
+
+case "$cmd" in
+  A) [ -f "$A_TXT" ] && sed -n '1,25p' "$A_TXT" || { echo "faltou: $A_TXT"; exit 2; } ;;
+  B) [ -f "$B_TXT" ] && sed -n '1,25p' "$B_TXT" || { echo "faltou: $B_TXT"; exit 2; } ;;
+  C) [ -f "$C_TXT" ] && sed -n '1,25p' "$C_TXT" || { echo "faltou: $C_TXT"; exit 2; } ;;
+  D)
+     term="${1:-jwt}"; N="${2:-20}"; role="${3:-}"
+     if [ -x ./omega_search_fast ]; then
+       ./omega_search_fast --in omega_msgs.jsonl --term "$term" --limit "$N" ${role:+--role "$role"}
+     elif [ -x ./omega_query_msgs.py ]; then
+       ./omega_query_msgs.py --in omega_msgs.jsonl --term "$term" --limit "$N" ${role:+--role "$role"}
+     else
+       echo "sem omega_search_fast e sem omega_query_msgs.py; fallback grep:"
+       grep -i "$term" omega_msgs.jsonl | head -n "$N"
+     fi
+     ;;
+  *) echo "uso:"
+     echo "  omega A"
+     echo "  omega B"
+     echo "  omega C"
+     echo "  omega D <term> [N] [role]"
+     exit 2 ;;
+esac
