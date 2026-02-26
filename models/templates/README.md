@@ -24,3 +24,11 @@ These templates can be updated with the following commands:
 ./scripts/get_chat_template.py zai-org/GLM-4.5                               > models/templates/zai-org-GLM-4.5.jinja
 ./scripts/get_chat_template.py deepseek-ai/DeepSeek-V3.1                     > models/templates/deepseek-ai-DeepSeek-V3.1.jinja
 ```
+
+
+Custom local template (authored in-repo):
+
+```bash
+# Deterministic RAFAELIA RLL prompt layer
+# use with --jinja --chat-template-file models/templates/rafaelia-rll.jinja
+```
