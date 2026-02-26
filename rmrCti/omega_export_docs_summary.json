@@ -1,0 +1,25 @@
+{
+  "export1gb.zip": {
+    "files_total": 7,
+    "bytes_total": 1141198277,
+    "by_class": {
+      "data": 7
+    },
+    "by_ext": {
+      ".json": 7
+    },
+    "n_docs_scanned": 1,
+    "entropy": {},
+    "top_tokens_tf": [],
+    "top_latent": [],
+    "top_emergent": [],
+    "cooc_top": [],
+    "niches": [],
+    "needs": {
+      "code_docs_ratio": 0.0,
+      "docs_missing_hint": false,
+      "tests_hint_count": 0,
+      "tests_missing_hint": true
+    }
+  }
+}

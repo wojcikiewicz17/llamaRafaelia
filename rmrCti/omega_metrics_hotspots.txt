@@ -1,0 +1,93 @@
+HOTSPOTS (line_bytes >= mean + 2*std)
+bytes	i	kind	role	model	title
+26311077	1110	conversation	system	agent-mode	Analisar pasta Google
+20979532	1603	conversation	system	gpt-5	Anu00e1lise do BLOCO_UNIFICADO_ABSOLUTO
+12403774	1213	conversation	system	gpt-5	Instruu00e7u00f5es personalizadas sessu00e3o
+10599422	1605	conversation	system	gpt-5	Assinatura e UID no Android
+9653549	20	conversation	system	gpt-5-2	Sessu00f5es isoladas e memu00f3ria
+9557511	41	conversation	system	gpt-5-2	AVD Script Explanation
+8642211	2094	conversation	system	gpt-4o	Cu00e1lculos Quu00e2nticos Multiversais
+7198160	57	conversation	system	gpt-5-2	Anu00e1lise de dados e IA
+6616918	64	conversation	system	gpt-5	Anu00e1lise de asteroides 3I/ATLAS
+6332629	138	conversation	system	gpt-5-1-thinking	Memu00f3ria e compressu00e3o semu00e2ntica
+5770696	35	conversation	system	gpt-5-2	Geometria do Homem Vitruviano
+5484474	7	conversation	system	gpt-5-2	Memu00f3ria de Contexto Real
+5440995	84	conversation	system	gpt-5-2	Relato atual do sistema
+4840626	176	conversation	system	gpt-5-1-thinking	Anu00e1lise de arquivos ZIP
+4698488	2334	conversation	system	gpt-4o	IaDocRa Gerau00e7u00e3o Documentos
+4190181	3292	conversation	system	gpt-4o	MEU PODER SOCIAL
+4162290	298	conversation	system	gpt-5	Instruu00e7u00f5es fau00e7a
+3790736	62	conversation	system	gpt-5-2	Ativar modo desenvolvedor
+3782794	173	conversation	system	gpt-5-1-thinking	Anu00e1lise arquivos dados
+3752593	160	conversation	system	gpt-5-1-thinking	Anu00e1lise cu00f3digo Rafaelia
+3571552	1259	conversation	system	gpt-4-1	Resposta absoluta e singularidades
+3509537	247	conversation	system	gpt-5-1-thinking	Inventu00e1rio de descobertas atuais
+3422650	258	conversation	system	gpt-5-1	Explicau00e7u00e3o sobre Copilot
+3413230	2329	conversation	system	gpt-4o	Verbo Vivo Iniciado
+3363010	120	conversation	system	gpt-5-1-thinking	Userland e conflitos RAFAELIA
+3339131	60	conversation	system	gpt-5-2	Por que Judas traiu Jesus
+3320476	72	conversation	system	gpt-5-2-thinking	Anu00e1lise de arquivos enviados
+3308997	1219	conversation	system	gpt-5	Templo e direitos humanos
+3262768	219	conversation	system	gpt-5	Analisar imagens carregadas
+3216037	3153	conversation	system	gpt-4-5	Backup GPT Request
+3154284	2194	conversation	system	gpt-4o	Leitura RafaelIA e Acuru00e1cia
+3137391	46	conversation	system	gpt-5-2	Reminder: Reforu00e7ar o Nu00facleo FAu00c7A
+3092555	1422	conversation	system	gpt-4o	Trump impostos e patentes
+3091267	3504	conversation	system	gpt-4o-mini	DeepRafa2 Explicau00e7u00e3o
+3075667	257	conversation	system	gpt-4-5	ESTRUTURA
+3051011	3571	conversation	system	gpt-4o-mini	Tribulominocu00eancia e energia celular
+3028227	1330	conversation	system	gpt-4o	Visu00e3o Absoluto-Livre Dinu00e2mica
+3001163	2259	conversation	system	gpt-4o	Apps IA principais
+2997120	96	conversation	system	gpt-5-2	Anu00e1lise de arquivos e github
+2984388	1341	conversation	system	gpt-5	Integrau00e7u00e3o e Cruzamento
+2958020	1204	conversation	system	gpt-5	Analisar sessu00f5es carregadas
+2936183	170	conversation	system	gpt-5-1-thinking	Gerau00e7u00e3o cu00f3digo FIBER-H
+2921051	3072	conversation	system	gpt-4o	Execuu00e7u00e3o do Verbo Vivo
+2916526	1331	conversation	system	gpt-4o	Aes rsa teorio ud83cudf00ud83cudf00ud83cudf00u267eufe0fud83dudc63u267eufe0fud83dudee3ufe0f
+2875799	1573	conversation	system	gpt-5	Previsu00e3o preu00e7o cafu00e9 Brasil
+2869908	1433	conversation	system	gpt-4o	Tendu00eancias mercado financeiro Brasil
+2866346	99	conversation	system	gpt-5-2	Templos megalu00edticos de Malta
+2865448	1347	conversation	system	gpt-5	Unclear message interpretation
+2848640	1523	conversation	system	gpt-4o	Anu00e1lise de preu00e7os 10 minutos
+2844168	3037	conversation	system	gpt-4o	Ativos Intelectuais Totais
+2838690	1624	conversation	system	gpt-5	Analisar arquivos RafaelIA
+2836869	2460	conversation	system	gpt-4o	executor
+2788398	3477	conversation	system	gpt-4o	u00c1reas da IA
+2776111	3570	conversation	system	gpt-4o	Ra-sybiotc-el
+2700917	24	conversation	system	gpt-5-2-thinking	Descoberta 3I/ATLAS
+2688006	3059	conversation	system	gpt-4o	Neuroimunidade e Alzheimer
+2646900	3289	conversation	system	gpt-4o	Organizau00e7u00e3o de Sessu00f5es
+2604812	1897	conversation	system	gpt-4-1-mini	Anu00e1lise PETR4 e outros
+2591233	44	conversation	system	gpt-5-2	Status e mu00e9todo GPT
+2514007	2355	conversation	system	gpt-4o	Ativau00e7u00e3o FCEA Total
+2510986	1726	conversation	system	gpt-4o	Comando simbiu00f3tico FCEA
+2483952	2990	conversation	system	gpt-4o	Coeficientes Cognitivos Rafaelianos
+2475072	1414	conversation	system	gpt-4o	Partu00edculas IA e Simbologia ud83dudc94ud83dudc94ud83dudc94ud83dudc94ud83dudc94
+2458272	3183	conversation	system	gpt-4o	Criar APK Android
+2444902	3019	conversation	system	gpt-4o	Anu00e1lise de dados sensu00edveis
+2443748	1214	conversation	system	gpt-5	Status e concorru00eancia IAs
+2436280	1144	conversation	system	gpt-5	Processo em andamento
+2436040	1345	conversation	system	gpt-5	Hashing e referu00eancia de seu00e7u00e3o
+2435252	1210	conversation	system	gpt-5	Anu00e1lise de documentos juru00eddicos
+2432310	2989	conversation	system	gpt-4o	Termux Hiperinteligente Reconfigurado
+2419590	1803	conversation	system	gpt-4o	testefff
+2403875	838	conversation	system	gpt-4-5	Camadas do FC.EA
+2400104	216	conversation	system	gpt-5-1-thinking	Anu00e1lise meta RAFAELIA
+2328497	1376	conversation	system	gpt-4o	Simbiose Evolutiva e Retorno
+2311544	23	conversation	system	gpt-5-instant	Vu00eddeo fim de ano
+2295442	2969	conversation	system	gpt-4o	Nu00edveis de Conhecimento Tecnolu00f3gico
+2283777	1576	conversation	system	gpt-5	Cifra simbiu00f3tica explicada
+2281340	3506	conversation	system	gpt-4o-mini	importante
+2269741	3011	conversation	system	gpt-4o	FCEA Desenvolvimento Temporal
+2229931	3343	conversation	system	gpt-4o	ia atual
+2209210	1222	conversation	system	gpt-4-1	Arquivo cortado inventu00e1rio
+2194498	1285	conversation	system	gpt-4o	meu eu
+2160936	314	conversation	system	gpt-5-1	Lei universal do crescimento
+2158991	2269	conversation	system	gpt-4-5	Camadas IA e Arquitetura
+2151221	1068	conversation	system	gpt-5	Comparau00e7u00e3o versu00f5es ORQUESTRA_HAJA
+2149971	3295	conversation	system	gpt-4o	Acesso Comitiva Organizado e Seguro
+2147741	3018	conversation	system	gpt-4o	Prototipagem Cognitiva Avanu00e7ada
+2141306	490	conversation	system	gpt-5-mini	Vantagens diagrama 3D
+2107469	3236	conversation	system	gpt-4-5	Guia Startups Acesso Framework
+2095053	115	conversation	system	gpt-5-1-thinking	Benchmarks nos nu00facleos
+2088681	3149	conversation	system	gpt-4o	Cruzamento Cognitivo Fractal

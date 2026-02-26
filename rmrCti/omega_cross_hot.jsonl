@@ -1,0 +1,7 @@
+{"model": "unknown", "msgs": 2896, "tool_pct": 0.14}
+{"model": "gpt-5-1-thinking", "msgs": 29, "tool_pct": 82.76}
+{"model": "gpt-5-mini", "msgs": 95, "tool_pct": 2.11}
+{"model": "gpt-5", "msgs": 36, "tool_pct": 0.0}
+{"model": "gpt-4-1-mini", "msgs": 800, "tool_pct": 0.25}
+{"model": "gpt-4o", "msgs": 2181, "tool_pct": 2.93}
+{"model": "gpt-4o-mini", "msgs": 65, "tool_pct": 1.54}

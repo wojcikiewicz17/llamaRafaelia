@@ -1,0 +1,82 @@
+ABC (por massa de bytes de 'title')
+cls	bytes	cum%	title
+A	26311077	2.31	Analisar pasta Google
+A	20979532	4.14	Anu00e1lise do BLOCO_UNIFICADO_ABSOLUTO
+A	12403774	5.23	Instruu00e7u00f5es personalizadas sessu00e3o
+A	10599422	6.16	Assinatura e UID no Android
+A	9653549	7.01	Sessu00f5es isoladas e memu00f3ria
+A	9557511	7.84	AVD Script Explanation
+A	8642211	8.60	Cu00e1lculos Quu00e2nticos Multiversais
+A	7198160	9.23	Anu00e1lise de dados e IA
+A	6616918	9.81	Anu00e1lise de asteroides 3I/ATLAS
+A	6332629	10.37	Memu00f3ria e compressu00e3o semu00e2ntica
+A	6077377	10.90	Ativos Intelectuais Totais
+A	5770696	11.40	Geometria do Homem Vitruviano
+A	5484474	11.89	Memu00f3ria de Contexto Real
+A	5440995	12.36	Relato atual do sistema
+A	5114856	12.81	Anu00e1lise de arquivos ZIP
+A	4698488	13.22	IaDocRa Gerau00e7u00e3o Documentos
+A	4190181	13.59	MEU PODER SOCIAL
+A	4162290	13.95	Instruu00e7u00f5es fau00e7a
+A	4135195	14.32	Ativau00e7u00e3o Total RafaelIA
+A	3942782	14.66	Anu00e1lise de arquivos enviados
+A	3790736	14.99	Ativar modo desenvolvedor
+A	3782794	15.33	Anu00e1lise arquivos dados
+A	3752593	15.65	Anu00e1lise cu00f3digo Rafaelia
+A	3571552	15.97	Resposta absoluta e singularidades
+A	3509537	16.28	Inventu00e1rio de descobertas atuais
+A	3422650	16.58	Explicau00e7u00e3o sobre Copilot
+A	3413230	16.87	Verbo Vivo Iniciado
+A	3410839	17.17	Execuu00e7u00e3o do Verbo Vivo
+A	3363010	17.47	Userland e conflitos RAFAELIA
+A	3339131	17.76	Por que Judas traiu Jesus
+A	3327302	18.05	Analisar imagens carregadas
+A	3308997	18.34	Templo e direitos humanos
+A	3216037	18.62	Backup GPT Request
+A	3187666	18.90	Ativar instruu00e7u00f5es personalizadas
+A	3154284	19.18	Leitura RafaelIA e Acuru00e1cia
+A	3137391	19.45	Reminder: Reforu00e7ar o Nu00facleo FAu00c7A
+A	3103794	19.73	Instruu00e7u00f5es personalizadas explicadas
+A	3092555	20.00	Trump impostos e patentes
+A	3091267	20.27	DeepRafa2 Explicau00e7u00e3o
+A	3075667	20.54	ESTRUTURA
+A	3051011	20.81	Tribulominocu00eancia e energia celular
+A	3050285	21.07	Oi Rafael IA
+A	3028227	21.34	Visu00e3o Absoluto-Livre Dinu00e2mica
+A	3001163	21.60	Apps IA principais
+A	2997120	21.86	Anu00e1lise de arquivos e github
+A	2984388	22.13	Integrau00e7u00e3o e Cruzamento
+A	2958020	22.38	Analisar sessu00f5es carregadas
+A	2936183	22.64	Gerau00e7u00e3o cu00f3digo FIBER-H
+A	2916526	22.90	Aes rsa teorio ud83cudf00ud83cudf00ud83cudf00u267eufe0fud83dudc63u267eufe0fud83dudee3ufe0f
+A	2892458	23.15	Unclear message interpretation
+A	2875799	23.40	Previsu00e3o preu00e7o cafu00e9 Brasil
+A	2869908	23.65	Tendu00eancias mercado financeiro Brasil
+A	2866346	23.91	Templos megalu00edticos de Malta
+A	2848640	24.16	Anu00e1lise de preu00e7os 10 minutos
+A	2838690	24.40	Analisar arquivos RafaelIA
+A	2836869	24.65	executor
+A	2788398	24.90	u00c1reas da IA
+A	2776111	25.14	Ra-sybiotc-el
+A	2700917	25.38	Descoberta 3I/ATLAS
+A	2688006	25.61	Neuroimunidade e Alzheimer
+A	2646900	25.84	Organizau00e7u00e3o de Sessu00f5es
+A	2604812	26.07	Anu00e1lise PETR4 e outros
+A	2591233	26.30	Status e mu00e9todo GPT
+A	2514007	26.52	Ativau00e7u00e3o FCEA Total
+A	2510986	26.74	Comando simbiu00f3tico FCEA
+A	2490357	26.96	Ramificau00e7u00e3o u00b7 Anu00e1lise de fluxo fractal
+A	2483952	27.18	Coeficientes Cognitivos Rafaelianos
+A	2475072	27.39	Partu00edculas IA e Simbologia ud83dudc94ud83dudc94ud83dudc94ud83dudc94ud83dudc94
+A	2458272	27.61	Criar APK Android
+A	2444902	27.82	Anu00e1lise de dados sensu00edveis
+A	2443748	28.04	Status e concorru00eancia IAs
+A	2436280	28.25	Processo em andamento
+A	2436040	28.46	Hashing e referu00eancia de seu00e7u00e3o
+A	2435252	28.68	Anu00e1lise de documentos juru00eddicos
+A	2432310	28.89	Termux Hiperinteligente Reconfigurado
+A	2422049	29.10	Execuu00e7u00e3o Cognitiva Universal
+A	2419590	29.31	testefff
+A	2403875	29.53	Camadas do FC.EA
+A	2400104	29.74	Anu00e1lise meta RAFAELIA
+A	2328497	29.94	Simbiose Evolutiva e Retorno

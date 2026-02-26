@@ -1,0 +1,33 @@
+{
+  "params": {
+    "scan_jsonl": "out.bitstack.jsonl",
+    "out": "test.coupled.jsonl",
+    "report": "coupled_report.json",
+    "R": 2.0,
+    "r": 0.7,
+    "kappa": 0.22,
+    "alpha": 0.4487989505128276,
+    "beta": 0.3490658503988659,
+    "lam": 1000.0
+  },
+  "stable_fixpoint_hits": 0,
+  "bad_events": 3,
+  "gate_hist_1to9": {
+    "1": 0,
+    "2": 3,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0
+  },
+  "J_hist_0to3": {
+    "0": 0,
+    "1": 3,
+    "2": 0,
+    "3": 0
+  },
+  "ethos": "love_guard=1 => preservar, marcar, nao forcar colapso"
+}
