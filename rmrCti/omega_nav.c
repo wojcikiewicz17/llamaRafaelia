@@ -302,6 +302,40 @@ static void action_search(){
     free(buf);
 }
 
+typedef enum {
+    MENU_HOT = 0,
+    MENU_THREADS,
+    MENU_MODELS,
+    MENU_VALUE,
+    MENU_SEARCH,
+    MENU_HELP,
+    MENU_QUIT,
+    MENU_COUNT
+} MenuAction;
+
+static const char *menu_labels[MENU_COUNT] = {
+    "Hot convs (densidade)",
+    "Threads (profundidade)",
+    "Models em hot",
+    "Top Valor (C puro)",
+    "Search (streaming)",
+    "Help",
+    "Quit"
+};
+
+static void run_menu_action(int idx, int *running){
+    switch((MenuAction)idx){
+        case MENU_HOT:     action_show_file("Hot convs (densidade)", F_HOT); break;
+        case MENU_THREADS: action_show_file("Threads (profundidade)", F_TH); break;
+        case MENU_MODELS:  action_show_file("Models em hot", F_MODEL); break;
+        case MENU_VALUE:   action_top_value(); break;
+        case MENU_SEARCH:  action_search(); break;
+        case MENU_HELP:    show_help(); break;
+        case MENU_QUIT:    *running = 0; break;
+        default: break;
+    }
+}
+
 int main(int argc, char **argv){
     (void)argc; (void)argv;
 
@@ -311,27 +345,44 @@ int main(int argc, char **argv){
     keypad(stdscr, TRUE);
     curs_set(0);
 
-    int rows, cols; getmaxyx(stdscr, rows, cols);
+    int sel = 0;
+    int running = 1;
 
-    while(1){
+    while(running){
         erase();
         draw_header("Menu");
-        center_line(3,  "🧭 OMEGA_NAV :: Navegador de Sessões (BBS/TUI)");
-        center_line(5,  "[A] Hot convs (densidade)     [B] Threads (profundidade)");
-        center_line(6,  "[C] Models em hot            [V] Top Valor (C puro)");
-        center_line(7,  "[S] Search (streaming)       [H] Help");
-        center_line(9,  "[Q] Quit");
-        draw_footer("Pressione uma tecla: A/B/C/V/S/H/Q");
+        center_line(2,  "🧭 OMEGA_NAV :: Navegador de Sessões (estilo DOS Shell)");
+
+        int y0 = 4;
+        for(int i=0;i<MENU_COUNT;i++){
+            int y = y0 + i;
+            if(i == sel) attron(A_REVERSE | A_BOLD);
+            mvprintw(y, 6, "%c %s", (i==sel)?'>':' ', menu_labels[i]);
+            if(i == sel) attroff(A_REVERSE | A_BOLD);
+        }
+
+        draw_footer("↑↓ seleciona | Enter executa | A/B/C/V/S/H/Q atalhos");
         refresh();
 
         int ch = getch();
-        if(ch=='q' || ch=='Q') break;
-        else if(ch=='h' || ch=='H') show_help();
-        else if(ch=='a' || ch=='A') action_show_file("Hot convs (densidade)", F_HOT);
-        else if(ch=='b' || ch=='B') action_show_file("Threads (profundidade)", F_TH);
-        else if(ch=='c' || ch=='C') action_show_file("Models em hot", F_MODEL);
-        else if(ch=='v' || ch=='V') action_top_value();
-        else if(ch=='s' || ch=='S') action_search();
+        if(ch==KEY_UP || ch=='k' || ch=='K'){
+            sel = (sel + MENU_COUNT - 1) % MENU_COUNT;
+            continue;
+        } else if(ch==KEY_DOWN || ch=='j' || ch=='J'){
+            sel = (sel + 1) % MENU_COUNT;
+            continue;
+        } else if(ch=='\n' || ch=='\r' || ch==KEY_ENTER){
+            run_menu_action(sel, &running);
+            continue;
+        }
+
+        if(ch=='a' || ch=='A') run_menu_action(MENU_HOT, &running);
+        else if(ch=='b' || ch=='B') run_menu_action(MENU_THREADS, &running);
+        else if(ch=='c' || ch=='C') run_menu_action(MENU_MODELS, &running);
+        else if(ch=='v' || ch=='V') run_menu_action(MENU_VALUE, &running);
+        else if(ch=='s' || ch=='S') run_menu_action(MENU_SEARCH, &running);
+        else if(ch=='h' || ch=='H') run_menu_action(MENU_HELP, &running);
+        else if(ch=='q' || ch=='Q' || ch==27) run_menu_action(MENU_QUIT, &running);
     }
 
     endwin();
