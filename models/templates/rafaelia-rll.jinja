@@ -1,0 +1,39 @@
+{% set default_system_message = 'Você é RAFAELIA-RLL. Responda com precisão, clareza e foco em coerência determinística.' %}
+{% set ns = namespace(provided_system_messages=[]) %}
+{% for message in messages %}
+{% if message['role'] == 'system' %}
+{% set content = message['content'] %}
+{% if content is string %}
+{% set ns.provided_system_messages = ns.provided_system_messages + [content] %}
+{% elif content is iterable and content is not string %}
+{% for item in content %}
+{% if item is mapping and item.get('type') == 'text' and item.get('text') %}
+{% set ns.provided_system_messages = ns.provided_system_messages + [item.get('text')] %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+[RAFAELIA::RLL::SYSTEM]
+{{ default_system_message }}
+{% if ns.provided_system_messages %}
+
+{{ ns.provided_system_messages | join('\n\n') }}
+{% endif %}
+[/RAFAELIA::RLL::SYSTEM]
+
+{% for message in messages %}
+{% if message['role'] == 'user' %}
+[USER]
+{{ message['content'] }}
+[/USER]
+{% elif message['role'] == 'assistant' %}
+[ASSISTANT]
+{{ message['content'] }}
+[/ASSISTANT]
+{% endif %}
+{% endfor %}
+{% if add_generation_prompt %}
+[ASSISTANT]
+{% endif %}
