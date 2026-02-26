@@ -1,80 +1,24 @@
-{{- bos_token -}}
-
+{%- if not add_generation_prompt is defined -%}
+    {%- set add_generation_prompt = true -%}
+{%- endif -%}
 {%- set ns = namespace(system_prompt='') -%}
-{%- if messages and messages[0]['role'] == 'system' -%}
-    {%- if messages[0]['content'] is string -%}
-        {%- set ns.system_prompt = messages[0]['content'] -%}
-    {%- else -%}
-        {%- set ns.system_prompt = messages[0]['content'] | tojson -%}
-    {%- endif -%}
-    {%- set messages = messages[1:] -%}
-{%- endif -%}
-
-{%- if ns.system_prompt -%}
-{{- '[SYSTEM]' + ns.system_prompt + '[/SYSTEM]\n' -}}
-{%- endif -%}
-
 {%- for message in messages -%}
-    {%- if message['role'] == 'user' -%}
-{{- '[USER]' -}}
-        {%- if message['content'] is string -%}
-{{- message['content'] -}}
-        {%- else -%}
-{{- message['content'] | tojson -}}
-        {%- endif -%}
-{{- '[/USER]\n' -}}
-
-    {%- elif message['role'] == 'assistant' and message['content'] is none and message.get('tool_calls') -%}
-        {%- for tool_call in message['tool_calls'] -%}
-{{- '[TOOL_CALLS]' -}}
-            {%- if tool_call.get('id') -%}
-{{- '[CALL_ID]' + tool_call['id'] -}}
-            {%- endif -%}
-{{- '[NAME]' + tool_call['function']['name'] -}}
-{{- '[ARGS]' -}}
-            {%- if tool_call['function']['arguments'] is string -%}
-{{- tool_call['function']['arguments'] -}}
-            {%- else -%}
-{{- tool_call['function']['arguments'] | tojson -}}
-            {%- endif -%}
-{{- '[/ARGS][/TOOL_CALLS]\n' -}}
-        {%- endfor -%}
-
-    {%- elif message['role'] == 'assistant' -%}
-{{- '[ASSISTANT]' -}}
-        {%- if message['content'] is string -%}
-{{- message['content'] -}}
-        {%- elif message['content'] is none -%}
-{{- '' -}}
-        {%- else -%}
-{{- message['content'] | tojson -}}
-        {%- endif -%}
-{{- '[/ASSISTANT]\n' -}}
-
-    {%- elif message['role'] == 'tool' -%}
-{{- '[TOOL_OUTPUT]' -}}
-        {%- if message.get('tool_call_id') -%}
-{{- '[CALL_ID]' + message['tool_call_id'] -}}
-        {%- endif -%}
-{{- '[CONTENT]' -}}
-        {%- if message['content'] is string -%}
-{{- message['content'] -}}
-        {%- else -%}
-{{- message['content'] | tojson -}}
-        {%- endif -%}
-{{- '[/CONTENT][/TOOL_OUTPUT]\n' -}}
-
-    {%- else -%}
-{{- '[' + message['role'] | upper + ']' -}}
-        {%- if message['content'] is string -%}
-{{- message['content'] -}}
-        {%- else -%}
-{{- message['content'] | tojson -}}
-        {%- endif -%}
-{{- '[/' + message['role'] | upper + ']\n' -}}
+    {%- if message['role'] == 'system' and message['content'] is not none -%}
+        {%- set ns.system_prompt = (ns.system_prompt + '\n' + message['content'])|trim -%}
     {%- endif -%}
 {%- endfor -%}
-
+{{- bos_token -}}
+{{- 'System: Operador RLL obrigatório. Em TODA resposta, use exatamente os quatro blocos abaixo, nesta ordem e com estes títulos literais: CONTEXT, STATE, TRANSITION, RESULT. Não omita blocos, não renomeie blocos e não adicione blocos extras.\n' -}}
+{%- if ns.system_prompt != '' -%}
+{{- 'System: ' + ns.system_prompt + '\n' -}}
+{%- endif -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'user' and message['content'] is not none -%}
+{{- 'User: ' + message['content']|trim + '\n' -}}
+    {%- elif message['role'] == 'assistant' and message['content'] is not none -%}
+{{- 'Assistant: ' + message['content']|trim + '\n' -}}
+    {%- endif -%}
+{%- endfor -%}
 {%- if add_generation_prompt -%}
-{{- '[ASSISTANT]' -}}
+{{- 'Assistant:' -}}
 {%- endif -%}
