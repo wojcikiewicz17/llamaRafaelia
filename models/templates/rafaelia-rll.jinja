@@ -1,39 +1,102 @@
-{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}
-{% set default_system_message = "You are RAFAELIA::RLL. Follow system constraints, be precise, and maintain deterministic formatting." %}
-{% set provided_system_message = "" %}
-{% set start_index = 0 %}
+{%- if messages[0]["role"] == "system" %}
+    {%- set system_message = messages[0]["content"] %}
+    {%- set loop_messages = messages[1:] %}
+{%- else %}
+    {%- set loop_messages = messages %}
+{%- endif %}
+{%- if not tools is defined %}
+    {%- set tools = none %}
+{%- endif %}
+{%- set user_messages = loop_messages | selectattr("role", "equalto", "user") | list %}
 
-{% if messages and messages[0]['role'] == 'system' %}
-{% set provided_system_message = messages[0]['content'] %}
-{% set start_index = 1 %}
-{% endif %}
+{#- Keep strict alternation only for non-tool traffic #}
+{%- set ns = namespace() %}
+{%- set ns.index = 0 %}
+{%- for message in loop_messages %}
+    {%- if not (message.role == "tool" or message.role == "tool_results" or (message.tool_calls is defined and message.tool_calls is not none)) %}
+        {%- if (message["role"] == "user") != (ns.index % 2 == 0) %}
+            {{- raise_exception("After the optional system message, conversation roles must alternate user/assistant/user/assistant/...") }}
+        {%- endif %}
+        {%- set ns.index = ns.index + 1 %}
+    {%- endif %}
+{%- endfor %}
 
-{% if bos_token is defined %}{{ bos_token }}{% endif %}
-[RAFAELIA::RLL::SYSTEM]
-{{ default_system_message }}
-
-{% if provided_system_message %}
-{{ provided_system_message }}
-{% endif %}
-[/RAFAELIA::RLL::SYSTEM]
-
-{% for message in messages[start_index:] %}
-{% if message['role'] == 'user' %}
-[USER]
-{{ message['content'] }}
-[/USER]
-
-{% elif message['role'] == 'assistant' %}
-[ASSISTANT]
-{{ message['content'] if message['content'] is not none else '' }}
-[/ASSISTANT]
-
-{% elif message['role'] == 'system' %}
-[RAFAELIA::RLL::SYSTEM]
-{{ message['content'] }}
-[/RAFAELIA::RLL::SYSTEM]
-
-{% endif %}
-{% endfor %}
-{% if add_generation_prompt %}[ASSISTANT]
-{% endif %}
+{{- bos_token }}
+{%- for message in loop_messages %}
+    {%- if message["role"] == "user" %}
+        {%- if tools is not none and (message == user_messages[-1]) %}
+            {{- "[AVAILABLE_TOOLS][" }}
+            {%- for tool in tools %}
+                {%- set tool = tool.function %}
+                {{- '{"type": "function", "function": {' }}
+                {%- for key, val in tool.items() if key != "return" %}
+                    {%- if val is string %}
+                        {{- '"' + key + '": "' + val + '"' }}
+                    {%- else %}
+                        {{- '"' + key + '": ' + val|tojson }}
+                    {%- endif %}
+                    {%- if not loop.last %}
+                        {{- ", " }}
+                    {%- endif %}
+                {%- endfor %}
+                {{- "}}" }}
+                {%- if not loop.last %}
+                    {{- ", " }}
+                {%- else %}
+                    {{- "]" }}
+                {%- endif %}
+            {%- endfor %}
+            {{- "[/AVAILABLE_TOOLS]" }}
+        {%- endif %}
+        {%- if loop.last and system_message is defined %}
+            {{- "[INST]" + system_message + "\n\n" + message["content"] + "[/INST]" }}
+        {%- else %}
+            {{- "[INST]" + message["content"] + "[/INST]" }}
+        {%- endif %}
+    {%- elif message["role"] == "assistant" and (message.tool_calls is defined and message.tool_calls is not none) and (message["content"] is none) %}
+        {{- "[TOOL_CALLS][" }}
+        {%- for tool_call in message.tool_calls %}
+            {%- set fn = tool_call.function if tool_call.function is defined else tool_call %}
+            {{- '{"name": ' + fn.name|tojson + ', "arguments": ' + fn.arguments|tojson }}
+            {%- if tool_call.id is defined %}
+                {{- ', "id": ' + tool_call.id|tojson }}
+            {%- endif %}
+            {{- '}' }}
+            {%- if not loop.last %}
+                {{- ", " }}
+            {%- else %}
+                {{- "]" + eos_token }}
+            {%- endif %}
+        {%- endfor %}
+    {%- elif message.tool_calls is defined and message.tool_calls is not none %}
+        {{- "[TOOL_CALLS][" }}
+        {%- for tool_call in message.tool_calls %}
+            {%- set fn = tool_call.function if tool_call.function is defined else tool_call %}
+            {{- '{"name": ' + fn.name|tojson + ', "arguments": ' + fn.arguments|tojson }}
+            {%- if tool_call.id is defined %}
+                {{- ', "id": ' + tool_call.id|tojson }}
+            {%- endif %}
+            {{- '}' }}
+            {%- if not loop.last %}
+                {{- ", " }}
+            {%- else %}
+                {{- "]" + eos_token }}
+            {%- endif %}
+        {%- endfor %}
+    {%- elif message["role"] == "assistant" %}
+        {{- message["content"] + eos_token }}
+    {%- elif message["role"] == "tool" or message["role"] == "tool_results" %}
+        {%- if message.content is defined and message.content.content is defined %}
+            {%- set content = message.content.content %}
+        {%- else %}
+            {%- set content = message.content %}
+        {%- endif %}
+        {{- '[TOOL_OUTPUT]{"content": ' + content|tojson }}
+        {%- if message.tool_call_id is defined %}
+            {{- ', "call_id": ' + message.tool_call_id|tojson }}
+        {%- endif %}
+        {{- '}[/TOOL_OUTPUT]' }}
+    {%- else %}
+        {{- raise_exception("Only user and assistant roles are supported, with tool and tool_results messages for tool output.") }}
+    {%- endif %}
+{%- endfor %}
