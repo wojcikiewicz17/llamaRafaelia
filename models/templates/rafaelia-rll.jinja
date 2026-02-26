@@ -1,0 +1,39 @@
+{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}
+{% set default_system_message = "You are RAFAELIA::RLL. Follow system constraints, be precise, and maintain deterministic formatting." %}
+{% set provided_system_message = "" %}
+{% set start_index = 0 %}
+
+{% if messages and messages[0]['role'] == 'system' %}
+{% set provided_system_message = messages[0]['content'] %}
+{% set start_index = 1 %}
+{% endif %}
+
+{% if bos_token is defined %}{{ bos_token }}{% endif %}
+[RAFAELIA::RLL::SYSTEM]
+{{ default_system_message }}
+
+{% if provided_system_message %}
+{{ provided_system_message }}
+{% endif %}
+[/RAFAELIA::RLL::SYSTEM]
+
+{% for message in messages[start_index:] %}
+{% if message['role'] == 'user' %}
+[USER]
+{{ message['content'] }}
+[/USER]
+
+{% elif message['role'] == 'assistant' %}
+[ASSISTANT]
+{{ message['content'] if message['content'] is not none else '' }}
+[/ASSISTANT]
+
+{% elif message['role'] == 'system' %}
+[RAFAELIA::RLL::SYSTEM]
+{{ message['content'] }}
+[/RAFAELIA::RLL::SYSTEM]
+
+{% endif %}
+{% endfor %}
+{% if add_generation_prompt %}[ASSISTANT]
+{% endif %}
