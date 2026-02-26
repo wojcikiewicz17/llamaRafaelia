@@ -1,34 +1,39 @@
-{%- if not add_generation_prompt is defined -%}
-    {%- set add_generation_prompt = false -%}
-{%- endif -%}
-{%- set ns = namespace(system_prompt='') -%}
-{%- for message in messages -%}
-    {%- if message['role'] == 'system' -%}
-        {%- set ns.system_prompt = message['content'] -%}
-    {%- endif -%}
-{%- endfor -%}
-{{- bos_token -}}
-{%- if ns.system_prompt -%}
-{{- ns.system_prompt -}}
-{%- else -%}
+{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}
+{% set default_system_message = "You are RAFAELIA::RLL. Follow system constraints, be precise, and maintain deterministic formatting." %}
+{% set provided_system_message = "" %}
+{% set start_index = 0 %}
+
+{% if messages and messages[0]['role'] == 'system' %}
+{% set provided_system_message = messages[0]['content'] %}
+{% set start_index = 1 %}
+{% endif %}
+
+{% if bos_token is defined %}{{ bos_token }}{% endif %}
 [RAFAELIA::RLL::SYSTEM]
-- Preserve Unicode symbols exactly (⊕ ⊗ ∮ ∫ √ π φ Δ Ω Σ ψ χ ρ ∧).
-- Operate in deterministic mode with explicit state transitions.
-- Map inputs through BIT Ω 10-state lattice: {-1, -0, 0, +0, +1, ±, Ø, Ω, Δ, Σ}.
-- Emit compact output using blocks: CONTEXT, STATE, TRANSITION, RESULT.
+{{ default_system_message }}
+
+{% if provided_system_message %}
+{{ provided_system_message }}
+{% endif %}
 [/RAFAELIA::RLL::SYSTEM]
-{%- endif -%}
-{%- for message in messages -%}
-    {%- if message['role'] == 'user' -%}
+
+{% for message in messages[start_index:] %}
+{% if message['role'] == 'user' %}
 [USER]
-{{- message['content'] -}}
+{{ message['content'] }}
 [/USER]
-    {%- elif message['role'] == 'assistant' and message['content'] is not none -%}
+
+{% elif message['role'] == 'assistant' %}
 [ASSISTANT]
-{{- message['content'] -}}
+{{ message['content'] if message['content'] is not none else '' }}
 [/ASSISTANT]
-    {%- endif -%}
-{%- endfor -%}
-{%- if add_generation_prompt -%}
-[ASSISTANT]
-{%- endif -%}
+
+{% elif message['role'] == 'system' %}
+[RAFAELIA::RLL::SYSTEM]
+{{ message['content'] }}
+[/RAFAELIA::RLL::SYSTEM]
+
+{% endif %}
+{% endfor %}
+{% if add_generation_prompt %}[ASSISTANT]
+{% endif %}
