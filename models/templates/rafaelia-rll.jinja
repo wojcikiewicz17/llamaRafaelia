@@ -1,0 +1,24 @@
+{%- if not add_generation_prompt is defined -%}
+    {%- set add_generation_prompt = true -%}
+{%- endif -%}
+{%- set ns = namespace(system_prompt='') -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'system' and message['content'] is not none -%}
+        {%- set ns.system_prompt = (ns.system_prompt + '\n' + message['content'])|trim -%}
+    {%- endif -%}
+{%- endfor -%}
+{{- bos_token -}}
+{{- 'System: Operador RLL obrigatório. Em TODA resposta, use exatamente os quatro blocos abaixo, nesta ordem e com estes títulos literais: CONTEXT, STATE, TRANSITION, RESULT. Não omita blocos, não renomeie blocos e não adicione blocos extras.\n' -}}
+{%- if ns.system_prompt != '' -%}
+{{- 'System: ' + ns.system_prompt + '\n' -}}
+{%- endif -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'user' and message['content'] is not none -%}
+{{- 'User: ' + message['content']|trim + '\n' -}}
+    {%- elif message['role'] == 'assistant' and message['content'] is not none -%}
+{{- 'Assistant: ' + message['content']|trim + '\n' -}}
+    {%- endif -%}
+{%- endfor -%}
+{%- if add_generation_prompt -%}
+{{- 'Assistant:' -}}
+{%- endif -%}
