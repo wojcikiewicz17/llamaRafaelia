@@ -1,0 +1,364 @@
+*** rafa_cti_scan.c	2026-01-30 11:56:00.000000000 -0300
+--- rafa_cti_scan.c	2026-01-30 12:20:00.000000000 -0300
+***************
+*** 1,15 ****
+  // rafa_cti_scan.c
+  // RAFAELIA CTI :: streaming audit (no decompress)
+! // chunk=4096B, FID=CRC32C, Energy(E) on 256x128 bit-grid, Flip(F), Entropy(H), BadEvent(X)
+  // Output: JSONL append-only "bitstack"
+  
+  #include <stdio.h>
+  #include <stdint.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #include <time.h>
+  #include <errno.h>
+  
+  #ifndef CHUNK_BYTES
+  #define CHUNK_BYTES 4096
+  #endif
+--- 1,18 ----
+  // rafa_cti_scan.c
+  // RAFAELIA CTI :: streaming audit (no decompress)
+! // chunk=4096B, FID_RAW=CRC32C(n_read), FID_PAD=CRC32C(padded chunk),
+! // Energy(E) on 256x128 bit-grid, Flip(F), Density(H), BadEvent(X)
+  // Output: JSONL append-only "bitstack"
++ // Optional: --csv out.csv to write metrics table for quick plotting
+  
+  #include <stdio.h>
+  #include <stdint.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #include <time.h>
+  #include <errno.h>
++ #include <inttypes.h>
+  
+  #ifndef CHUNK_BYTES
+  #define CHUNK_BYTES 4096
+  #endif
+***************
+*** 110,120 ****
+  static void json_escape_write(FILE *out, const char *s) {
+    // minimal escape for filenames if needed (unused here)
+    while (*s) {
+      unsigned char c = (unsigned char)*s++;
+      if (c == '\\' || c == '"') { fputc('\\', out); fputc(c, out); }
+      else if (c == '\n') fputs("\\n", out);
+      else if (c == '\r') fputs("\\r", out);
+      else if (c == '\t') fputs("\\t", out);
+      else fputc(c, out);
+    }
+  }
+  
+  int main(int argc, char **argv) {
+!   if (argc < 3) {
+!     fprintf(stderr, "Usage: %s <input_file> <out_bitstack.jsonl>\n", argv[0]);
+      return 2;
+    }
+  
+!   const char *in_path = argv[1];
+!   const char *out_path = argv[2];
+--- 113,174 ----
+  static void json_escape_write(FILE *out, const char *s) {
+    // minimal escape for filenames if needed (unused here)
+    while (*s) {
+      unsigned char c = (unsigned char)*s++;
+      if (c == '\\' || c == '"') { fputc('\\', out); fputc(c, out); }
+      else if (c == '\n') fputs("\\n", out);
+      else if (c == '\r') fputs("\\r", out);
+      else if (c == '\t') fputs("\\t", out);
+      else fputc(c, out);
+    }
+  }
++ 
++ static void usage(const char *p) {
++   fprintf(stderr,
++     "Usage:\n"
++     "  %s <input_file> <out_bitstack.jsonl> [--csv out.csv]\n\n"
++     "Notes:\n"
++     "  - No decompression. Streaming audit only.\n"
++     "  - Writes JSONL append-only.\n",
++     p);
++ }
+  
+  int main(int argc, char **argv) {
+!   if (argc < 3) {
+!     usage(argv[0]);
+      return 2;
+    }
+  
+!   const char *in_path = NULL;
+!   const char *out_path = NULL;
+!   const char *csv_path = NULL;
+! 
+!   // positional: input, output
+!   in_path = argv[1];
+!   out_path = argv[2];
+! 
+!   // optional flags
+!   for (int i = 3; i < argc; i++) {
+!     if (strcmp(argv[i], "--csv") == 0) {
+!       if (i + 1 >= argc) { usage(argv[0]); return 2; }
+!       csv_path = argv[++i];
+!     } else {
+!       fprintf(stderr, "Unknown arg: %s\n", argv[i]);
+!       usage(argv[0]);
+!       return 2;
+!     }
+!   }
+***************
+*** 122,156 ****
+    FILE *in = fopen(in_path, "rb");
+    if (!in) {
+      fprintf(stderr, "ERR open input: %s (%s)\n", in_path, strerror(errno));
+      return 1;
+    }
+  
+    FILE *out = fopen(out_path, "ab"); // append-only
+    if (!out) {
+      fprintf(stderr, "ERR open output: %s (%s)\n", out_path, strerror(errno));
+      fclose(in);
+      return 1;
+    }
+  
+    crc32c_init();
+  
+    uint8_t *buf = (uint8_t *)malloc(CHUNK_BYTES);
+    uint8_t *prev = (uint8_t *)malloc(CHUNK_BYTES);
+    if (!buf || !prev) {
+      fprintf(stderr, "ERR malloc\n");
+      fclose(in); fclose(out);
+      free(buf); free(prev);
+      return 1;
+    }
+    memset(prev, 0, CHUNK_BYTES);
+  
+!   uint64_t offset = 0;
+    uint64_t idx = 0;
+    int have_prev = 0;
+  
+    while (1) {
+      size_t n = fread(buf, 1, CHUNK_BYTES, in);
+!     int bad = 0;
+  
+      if (n == 0) {
+        if (feof(in)) break;
+        fprintf(stderr, "ERR read at offset=%llu (%s)\n",
+                (unsigned long long)offset, strerror(errno));
+!       bad = 1;
+        // stop hard on read error
+        break;
+      }
+  
+      if (n < CHUNK_BYTES) {
+        // short read = bad-event flag (but still process as "event")
+!       bad = 1;
+        // pad deterministically with zeros so metrics stay well-defined
+        memset(buf + n, 0, CHUNK_BYTES - n);
+      }
+  
+!     uint32_t fid = crc32c_update(0, buf, CHUNK_BYTES);
+      uint64_t ones = count_ones_bits(buf, CHUNK_BYTES);
+      double entropy_density = (double)ones / (double)(CHUNK_BYTES * 8ull);
+  
+      uint64_t flips = have_prev ? flip_rate_bits(prev, buf, CHUNK_BYTES) : 0;
+      uint64_t E = energy_mismatch_4n(buf);
+--- 176,244 ----
+    FILE *in = fopen(in_path, "rb");
+    if (!in) {
+      fprintf(stderr, "ERR open input: %s (%s)\n", in_path, strerror(errno));
+      return 1;
+    }
+  
+    FILE *out = fopen(out_path, "ab"); // append-only
+    if (!out) {
+      fprintf(stderr, "ERR open output: %s (%s)\n", out_path, strerror(errno));
+      fclose(in);
+      return 1;
+    }
++ 
++   FILE *csv = NULL;
++   if (csv_path) {
++     csv = fopen(csv_path, "ab");
++     if (!csv) {
++       fprintf(stderr, "ERR open csv: %s (%s)\n", csv_path, strerror(errno));
++       fclose(in); fclose(out);
++       return 1;
++     }
++     // If file is empty, write header (best-effort)
++     fseek(csv, 0, SEEK_END);
++     long pos = ftell(csv);
++     if (pos == 0) {
++       fprintf(csv, "idx,off,off_pad,n_read,size,fid_raw,fid_pad,E,F,ones,H,X_bad,ts\n");
++     }
++   }
+  
+    crc32c_init();
+  
+    uint8_t *buf = (uint8_t *)malloc(CHUNK_BYTES);
+    uint8_t *prev = (uint8_t *)malloc(CHUNK_BYTES);
+    if (!buf || !prev) {
+      fprintf(stderr, "ERR malloc\n");
+      fclose(in); fclose(out);
++     if (csv) fclose(csv);
+      free(buf); free(prev);
+      return 1;
+    }
+    memset(prev, 0, CHUNK_BYTES);
+  
+!   uint64_t offset = 0;        // real bytes consumed
+    uint64_t idx = 0;
+    int have_prev = 0;
+  
+    while (1) {
+      size_t n = fread(buf, 1, CHUNK_BYTES, in);
+!     int X_bad = 0;            // bitmask: 1=short read, 2=io error
+  
+      if (n == 0) {
+        if (feof(in)) break;
+        fprintf(stderr, "ERR read at offset=%llu (%s)\n",
+                (unsigned long long)offset, strerror(errno));
+!       X_bad |= 2;
+        // stop hard on read error
+        break;
+      }
+  
+      if (n < CHUNK_BYTES) {
+        // short read = tail event (still process)
+!       X_bad |= 1;
+        // pad deterministically with zeros so metrics stay well-defined
+        memset(buf + n, 0, CHUNK_BYTES - n);
+      }
+  
+!     // Two identities:
+!     // fid_raw: what was actually read (n bytes)
+!     // fid_pad: canonical padded chunk (CHUNK_BYTES)
+!     uint32_t fid_raw = crc32c_update(0, buf, n);
+!     uint32_t fid_pad = crc32c_update(0, buf, CHUNK_BYTES);
+      uint64_t ones = count_ones_bits(buf, CHUNK_BYTES);
+      double entropy_density = (double)ones / (double)(CHUNK_BYTES * 8ull);
+  
+      uint64_t flips = have_prev ? flip_rate_bits(prev, buf, CHUNK_BYTES) : 0;
+      uint64_t E = energy_mismatch_4n(buf);
+***************
+*** 158,191 ****
+      // timestamp (unix)
+      time_t ts = time(NULL);
+  
+      // JSONL record
+      // Fields: idx, off, size, ts, fid_crc32c, E, flips, ones, H, bad
+      fprintf(out,
+              "{\"idx\":%llu,"
+              "\"off\":%llu,"
+              "\"size\":%u,"
+              "\"ts\":%lld,"
+!             "\"fid_crc32c\":\"%08x\","
+              "\"E\":%llu,"
+              "\"F\":%llu,"
+              "\"ones\":%llu,"
+              "\"H\":%.6f,"
+!             "\"X_bad\":%d}\n",
+              (unsigned long long)idx,
+              (unsigned long long)offset,
+              (unsigned)CHUNK_BYTES,
+              (long long)ts,
+!             (unsigned)fid,
+              (unsigned long long)E,
+              (unsigned long long)flips,
+              (unsigned long long)ones,
+              entropy_density,
+!             bad);
+  
+      // advance
+      memcpy(prev, buf, CHUNK_BYTES);
+      have_prev = 1;
+!     offset += (uint64_t)n; // advance by real bytes read (not padded)
+      idx++;
+  
+      // if it was short read, it was EOF tail: stop after record
+      if (n < CHUNK_BYTES) break;
+    }
+  
+    fflush(out);
+    fclose(in);
+    fclose(out);
+    free(buf);
+    free(prev);
+  
+    return 0;
+  }
+--- 246,307 ----
+      // timestamp (unix)
+      time_t ts = time(NULL);
+  
++     uint64_t off_pad = idx * (uint64_t)CHUNK_BYTES; // canonical base-fixed offset
++ 
+      // JSONL record
+-     // Fields: idx, off, size, ts, fid_crc32c, E, flips, ones, H, bad
++     // Fields: idx, off(real), off_pad(canonical), n_read, size, ts, fid_raw, fid_pad, E,F,ones,H,X_bad
+      fprintf(out,
+              "{\"idx\":%llu,"
+              "\"off\":%llu,"
++             "\"off_pad\":%llu,"
++             "\"n_read\":%u,"
+              "\"size\":%u,"
+              "\"ts\":%lld,"
+!             "\"fid_raw\":\"%08x\","
+!             "\"fid_pad\":\"%08x\","
+              "\"E\":%llu,"
+              "\"F\":%llu,"
+              "\"ones\":%llu,"
+              "\"H\":%.6f,"
+!             "\"X_bad\":%d}\n",
+              (unsigned long long)idx,
+              (unsigned long long)offset,
++             (unsigned long long)off_pad,
++             (unsigned)n,
+              (unsigned)CHUNK_BYTES,
+              (long long)ts,
+!             (unsigned)fid_raw,
+!             (unsigned)fid_pad,
+              (unsigned long long)E,
+              (unsigned long long)flips,
+              (unsigned long long)ones,
+              entropy_density,
+!             X_bad);
++ 
++     if (csv) {
++       fprintf(csv,
++         "%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%u,%u,%08x,%08x,%llu,%llu,%llu,%.6f,%d,%lld\n",
++         (uint64_t)idx,
++         (uint64_t)offset,
++         (uint64_t)off_pad,
++         (unsigned)n,
++         (unsigned)CHUNK_BYTES,
++         (unsigned)fid_raw,
++         (unsigned)fid_pad,
++         (unsigned long long)E,
++         (unsigned long long)flips,
++         (unsigned long long)ones,
++         entropy_density,
++         X_bad,
++         (long long)ts
++       );
++     }
+  
+      // advance
+      memcpy(prev, buf, CHUNK_BYTES);
+      have_prev = 1;
+!     offset += (uint64_t)n; // advance by real bytes read (not padded)
+      idx++;
+  
+      // if it was short read, it was EOF tail: stop after record
+      if (n < CHUNK_BYTES) break;
+    }
+  
+    fflush(out);
++   if (csv) { fflush(csv); fclose(csv); }
+    fclose(in);
+    fclose(out);
+    free(buf);
+    free(prev);
+  
+    return 0;
+  }
