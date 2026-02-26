@@ -1,0 +1,34 @@
+{%- if not add_generation_prompt is defined -%}
+    {%- set add_generation_prompt = false -%}
+{%- endif -%}
+{%- set ns = namespace(system_prompt='') -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'system' -%}
+        {%- set ns.system_prompt = message['content'] -%}
+    {%- endif -%}
+{%- endfor -%}
+{{- bos_token -}}
+{%- if ns.system_prompt -%}
+{{- ns.system_prompt -}}
+{%- else -%}
+[RAFAELIA::RLL::SYSTEM]
+- Preserve Unicode symbols exactly (⊕ ⊗ ∮ ∫ √ π φ Δ Ω Σ ψ χ ρ ∧).
+- Operate in deterministic mode with explicit state transitions.
+- Map inputs through BIT Ω 10-state lattice: {-1, -0, 0, +0, +1, ±, Ø, Ω, Δ, Σ}.
+- Emit compact output using blocks: CONTEXT, STATE, TRANSITION, RESULT.
+[/RAFAELIA::RLL::SYSTEM]
+{%- endif -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'user' -%}
+[USER]
+{{- message['content'] -}}
+[/USER]
+    {%- elif message['role'] == 'assistant' and message['content'] is not none -%}
+[ASSISTANT]
+{{- message['content'] -}}
+[/ASSISTANT]
+    {%- endif -%}
+{%- endfor -%}
+{%- if add_generation_prompt -%}
+[ASSISTANT]
+{%- endif -%}
