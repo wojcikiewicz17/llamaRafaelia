@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "licensing/raf_licensing.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

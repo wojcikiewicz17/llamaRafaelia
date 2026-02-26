@@ -44,6 +44,7 @@ if(RAFAELIA_BAREMETAL)
         ${CMAKE_CURRENT_SOURCE_DIR}/geometry
         ${CMAKE_CURRENT_SOURCE_DIR}/hardware
         ${CMAKE_CURRENT_SOURCE_DIR}/diagram
+        ${CMAKE_CURRENT_SOURCE_DIR}/licensing
         ${CMAKE_CURRENT_SOURCE_DIR}/rafaelia
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -113,6 +114,12 @@ if(RAFAELIA_BAREMETAL)
         utils/raf_utils.c
         utils/raf_utils.h
     )
+
+    # Licensing nucleus sources for add-ons
+    set(RAFAELIA_LICENSING_SOURCES
+        licensing/raf_licensing.c
+        licensing/raf_licensing.h
+    )
     
     # RAFAELIA module sources (formulas and ND vectors)
     set(RAFAELIA_MODULE_SOURCES
@@ -142,6 +149,7 @@ if(RAFAELIA_BAREMETAL)
         ${RAFAELIA_HARDWARE_SOURCES}
         ${RAFAELIA_DIAGRAM_SOURCES}
         ${RAFAELIA_UTILS_SOURCES}
+        ${RAFAELIA_LICENSING_SOURCES}
     )
 
     # Create low-level baremetal library
@@ -187,6 +195,7 @@ if(RAFAELIA_BAREMETAL)
         hardware/raf_hardware.h
         diagram/raf_diagram.h
         utils/raf_utils.h
+        licensing/raf_licensing.h
         rafaelia/raf_rafaelia_vector.h
         rafaelia/raf_rafaelia_core.h
         rafaelia/raf_rafaelia_math.h
@@ -219,6 +228,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"hardware/raf_hardware.h\"
 #include \"diagram/raf_diagram.h\"
 #include \"utils/raf_utils.h\"
+#include \"licensing/raf_licensing.h\"
 
 #endif /* RAFAELIA_BAREMETAL_LOWLEVEL_H */
 "
@@ -243,6 +253,7 @@ if(RAFAELIA_BAREMETAL)
 #include \"geometry/raf_geometry.h\"
 #include \"hardware/raf_hardware.h\"
 #include \"utils/raf_utils.h\"
+#include \"licensing/raf_licensing.h\"
 #include \"rafaelia/raf_rafaelia_vector.h\"
 #include \"rafaelia/raf_rafaelia_core.h\"
 #include \"rafaelia/raf_rafaelia_math.h\"
