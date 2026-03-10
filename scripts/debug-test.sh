@@ -95,10 +95,19 @@ test_number=${2:-}
 # Step 1: Reset and Setup folder context
 ########################################
 
-## Sanity check that we are actually in a git repo
-repo_root=$(git rev-parse --show-toplevel)
-if [ ! -d "$repo_root" ]; then
-    abort "Not in a Git repository."
+## Resolve repository root.
+## Prefer Git metadata, but allow running from source archives (no .git directory).
+if repo_root=$(git rev-parse --show-toplevel 2>/dev/null); then
+    :
+elif [ -f "${BASH_SOURCE[0]}" ]; then
+    script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+    repo_root=$(cd -- "$script_dir/.." && pwd)
+else
+    repo_root=$(pwd)
+fi
+
+if [ ! -f "$repo_root/CMakeLists.txt" ]; then
+    abort "Could not determine repository root (expected CMakeLists.txt at: $repo_root)."
 fi
 
 ## Reset folder to root context of git repo and Create and enter build directory
