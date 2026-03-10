@@ -4,7 +4,19 @@
 # Pre-commit: formats code and runs checks
 # Pre-push: builds the project, stashes unstaged changes
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+if REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
+    :
+else
+    SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
+    REPO_ROOT=$(cd -- "$SCRIPT_DIR/../../../.." && pwd)
+fi
+
+if [ ! -d "$REPO_ROOT/.git" ]; then
+    echo "Error: Git metadata was not found at $REPO_ROOT/.git."
+    echo "This script installs Git hooks and must be run from a Git checkout."
+    exit 1
+fi
+
 PRE_COMMIT_HOOK="$REPO_ROOT/.git/hooks/pre-commit"
 PRE_PUSH_HOOK="$REPO_ROOT/.git/hooks/pre-push"
 
