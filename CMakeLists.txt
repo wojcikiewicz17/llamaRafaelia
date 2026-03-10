@@ -247,7 +247,11 @@ set_target_properties(llama
     PROPERTIES
         PUBLIC_HEADER "${LLAMA_PUBLIC_HEADERS}")
 
-install(TARGETS llama llama-lowlevel llama-grammar LIBRARY PUBLIC_HEADER)
+install(TARGETS llama llama-lowlevel llama-grammar
+        RUNTIME       DESTINATION ${LLAMA_BIN_INSTALL_DIR}
+        LIBRARY       DESTINATION ${LLAMA_LIB_INSTALL_DIR}
+        ARCHIVE       DESTINATION ${LLAMA_LIB_INSTALL_DIR}
+        PUBLIC_HEADER DESTINATION ${LLAMA_INCLUDE_INSTALL_DIR})
 
 configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/llama-config.cmake.in
