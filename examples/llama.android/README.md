@@ -1,36 +1,61 @@
-# llama.android build notes
+# llama.android
 
-## ABIs supported
+## Assinatura de release (oficial) + trilha unsigned
 
-The Android native + APK build is explicitly pinned to:
+O módulo `app` possui duas trilhas de release:
 
-- `armeabi-v7a`
-- `arm64-v8a`
+- `release`: trilha oficial, assinada **somente** quando as credenciais de assinatura oficial existem.
+- `releaseUnsigned`: trilha de validação interna, sem assinatura oficial, separada da release oficial.
 
-Source of truth:
+### Credenciais aceitas (Gradle property ou variável de ambiente)
 
-- NDK ABI filters in `llama/build.gradle.kts`
-- ABI guard in `llama/src/main/cpp/CMakeLists.txt`
-- APK splits in `app/build.gradle.kts`
+- `LLAMA_ANDROID_RELEASE_STORE_FILE`
+- `LLAMA_ANDROID_RELEASE_STORE_PASSWORD`
+- `LLAMA_ANDROID_RELEASE_KEY_ALIAS`
+- `LLAMA_ANDROID_RELEASE_KEY_PASSWORD`
 
-## Expected output directories
+## Configuração local (sem hardcode)
 
-After running `./gradlew :app:assembleRelease :app:assembleDebug` from `examples/llama.android`:
+Você pode definir no `~/.gradle/gradle.properties` (recomendado) ou em `examples/llama.android/gradle.properties` local não versionado:
 
-- Native JNI outputs:
-  - `llama/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/armeabi-v7a/libllama-android.so`
-  - `llama/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a/libllama-android.so`
-- Unsigned release APKs per ABI:
-  - `app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk`
-  - `app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk`
-- Signed debug APKs per ABI:
-  - `app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk`
-  - `app/build/outputs/apk/debug/app-arm64-v8a-debug.apk`
+```properties
+LLAMA_ANDROID_RELEASE_STORE_FILE=/abs/path/release.keystore
+LLAMA_ANDROID_RELEASE_STORE_PASSWORD=***
+LLAMA_ANDROID_RELEASE_KEY_ALIAS=***
+LLAMA_ANDROID_RELEASE_KEY_PASSWORD=***
+```
 
-## CI
+Ou exportar no shell:
 
-Workflow: `.github/workflows/android-abi.yml`
+```bash
+export LLAMA_ANDROID_RELEASE_STORE_FILE=/abs/path/release.keystore
+export LLAMA_ANDROID_RELEASE_STORE_PASSWORD=***
+export LLAMA_ANDROID_RELEASE_KEY_ALIAS=***
+export LLAMA_ANDROID_RELEASE_KEY_PASSWORD=***
+```
 
-The workflow validates ABI-specific native outputs and APK outputs, then uploads artifacts grouped by ABI and signature mode.
+## CI (GitHub Actions) sem hardcode
 
-`*-internal-signed.apk` files are generated only for CI/internal validation and are not an official production release signature path.
+Mapeie secrets do repositório para variáveis de ambiente do job:
+
+```yaml
+env:
+  LLAMA_ANDROID_RELEASE_STORE_FILE: ${{ secrets.LLAMA_ANDROID_RELEASE_STORE_FILE }}
+  LLAMA_ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.LLAMA_ANDROID_RELEASE_STORE_PASSWORD }}
+  LLAMA_ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.LLAMA_ANDROID_RELEASE_KEY_ALIAS }}
+  LLAMA_ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.LLAMA_ANDROID_RELEASE_KEY_PASSWORD }}
+```
+
+## Comandos de build
+
+Release oficial (falha cedo se credenciais não existirem):
+
+```bash
+./gradlew :app:assembleRelease
+```
+
+Release unsigned para validação interna:
+
+```bash
+./gradlew :app:assembleReleaseUnsigned
+```
