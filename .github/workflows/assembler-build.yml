@@ -1,0 +1,46 @@
+name: assembler-build
+
+on:
+  push:
+    paths:
+      - 'assembler/**'
+      - 'rmrCti/**'
+      - '.github/workflows/assembler-build.yml'
+  pull_request:
+    paths:
+      - 'assembler/**'
+      - 'rmrCti/**'
+      - '.github/workflows/assembler-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-assembly:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export rmrCti C sources to x86_64 assembly
+        run: |
+          cd assembler
+          ./export-rmrcti-asm.sh
+
+      - name: Build assembly programs
+        run: |
+          cd assembler
+          ./build-asm.sh
+
+      - name: Upload hello artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembler-dist
+          path: assembler/dist/
+          if-no-files-found: error
+
+      - name: Upload rmrCti exported assembly
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembler-rmrcti-x86_64
+          path: assembler/rmrCti_x86_64/
+          if-no-files-found: error
