@@ -11,6 +11,20 @@ cmake_minimum_required(VERSION 3.22.1)
 # build script scope).
 project("llama-android")
 
+set(LLAMA_ANDROID_SUPPORTED_ABIS "armeabi-v7a;arm64-v8a" CACHE STRING "Supported Android ABIs for llama-android")
+
+if(ANDROID)
+    if(NOT ANDROID_ABI)
+        message(FATAL_ERROR "ANDROID_ABI is not defined by the Android toolchain")
+    endif()
+
+    if(NOT ANDROID_ABI IN_LIST LLAMA_ANDROID_SUPPORTED_ABIS)
+        message(FATAL_ERROR "Unsupported ANDROID_ABI='${ANDROID_ABI}'. Supported ABIs: ${LLAMA_ANDROID_SUPPORTED_ABIS}")
+    endif()
+
+    message(STATUS "llama-android target ABI: ${ANDROID_ABI}")
+endif()
+
 #include(FetchContent)
 #FetchContent_Declare(
 #        llama
