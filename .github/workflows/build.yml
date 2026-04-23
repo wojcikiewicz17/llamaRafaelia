@@ -1300,10 +1300,78 @@ jobs:
         with:
           log-accepted-android-sdk-licenses: false
 
-      - name: Build
+      - name: Build debug APK
+        working-directory: examples/llama.android
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Build release APK (unsigned or signed)
+        working-directory: examples/llama.android
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Build release AAB
+        working-directory: examples/llama.android
+        run: ./gradlew :app:bundleRelease --no-daemon
+
+      - name: Validate Android build artifacts
+        shell: bash
         run: |
-          cd examples/llama.android
-          ./gradlew build --no-daemon
+          set -euo pipefail
+
+          ARTIFACT_ROOT="examples/llama.android/app/build/outputs"
+          DEBUG_APK="$ARTIFACT_ROOT/apk/debug/app-debug.apk"
+          RELEASE_UNSIGNED_APK="$ARTIFACT_ROOT/apk/release/app-release-unsigned.apk"
+          RELEASE_SIGNED_APK="$ARTIFACT_ROOT/apk/release/app-release.apk"
+          RELEASE_AAB="$ARTIFACT_ROOT/bundle/release/app-release.aab"
+
+          [[ -f "$DEBUG_APK" ]] || { echo "Missing expected debug artifact: $DEBUG_APK"; exit 1; }
+          [[ -f "$RELEASE_AAB" ]] || { echo "Missing expected release bundle: $RELEASE_AAB"; exit 1; }
+
+          if [[ -f "$RELEASE_UNSIGNED_APK" ]]; then
+            echo "release_apk_kind=unsigned" >> "$GITHUB_ENV"
+            echo "release_apk_path=$RELEASE_UNSIGNED_APK" >> "$GITHUB_ENV"
+          elif [[ -f "$RELEASE_SIGNED_APK" ]]; then
+            echo "release_apk_kind=signed" >> "$GITHUB_ENV"
+            echo "release_apk_path=$RELEASE_SIGNED_APK" >> "$GITHUB_ENV"
+          else
+            echo "Missing expected release APK (unsigned or signed):"
+            echo " - $RELEASE_UNSIGNED_APK"
+            echo " - $RELEASE_SIGNED_APK"
+            exit 1
+          fi
+
+      - name: Upload APK debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-apk-debug
+          path: examples/llama.android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload APK unsigned artifact
+        if: ${{ env.release_apk_kind == 'unsigned' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-apk-release-unsigned
+          path: examples/llama.android/app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload APK signed artifact
+        if: ${{ env.release_apk_kind == 'signed' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-apk-release-signed
+          path: examples/llama.android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload AAB release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-aab-release
+          path: examples/llama.android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
 
   android-ndk-build:
     runs-on: ubuntu-latest
