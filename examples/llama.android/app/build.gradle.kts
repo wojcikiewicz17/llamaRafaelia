@@ -1,6 +1,39 @@
+import org.gradle.api.GradleException
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+}
+
+fun secret(name: String): String? {
+    return providers.gradleProperty(name).orNull
+        ?: providers.environmentVariable(name).orNull
+}
+
+val releaseStoreFile = secret("LLAMA_ANDROID_RELEASE_STORE_FILE")
+val releaseStorePassword = secret("LLAMA_ANDROID_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = secret("LLAMA_ANDROID_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = secret("LLAMA_ANDROID_RELEASE_KEY_PASSWORD")
+
+val hasOfficialReleaseSigningCreds = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
+
+val requestedOfficialRelease = gradle.startParameter.taskNames.any { taskName ->
+    val normalized = taskName.lowercase()
+    normalized.contains("release") && !normalized.contains("unsigned")
+}
+
+if (requestedOfficialRelease && !hasOfficialReleaseSigningCreds) {
+    throw GradleException(
+        "Official release signing credentials are missing. Provide LLAMA_ANDROID_RELEASE_STORE_FILE, " +
+            "LLAMA_ANDROID_RELEASE_STORE_PASSWORD, LLAMA_ANDROID_RELEASE_KEY_ALIAS, " +
+            "LLAMA_ANDROID_RELEASE_KEY_PASSWORD via Gradle properties or environment variables. " +
+            "Use :app:assembleReleaseUnsigned for internal unsigned validation builds."
+    )
 }
 
 android {
@@ -20,6 +53,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasOfficialReleaseSigningCreds) {
+            create("releaseOfficial") {
+                storeFile = file(requireNotNull(releaseStoreFile))
+                storePassword = requireNotNull(releaseStorePassword)
+                keyAlias = requireNotNull(releaseKeyAlias)
+                keyPassword = requireNotNull(releaseKeyPassword)
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -27,6 +71,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasOfficialReleaseSigningCreds) {
+                signingConfig = signingConfigs.getByName("releaseOfficial")
+            }
+        }
+
+        create("releaseUnsigned") {
+            initWith(getByName("release"))
+            signingConfig = null
+            matchingFallbacks += listOf("release")
         }
     }
     compileOptions {
