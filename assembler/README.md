@@ -25,6 +25,8 @@ Saída:
 - `assembler/rmrCti_x86_64/*.s`
 - `assembler/rmrCti_x86_64/compiled.txt`
 - `assembler/rmrCti_x86_64/failed.txt`
+- `assembler/rmrCti_x86_64/compile_commands.txt`
+- `assembler/rmrCti_x86_64/errors/*.log`
 
 ## Build local
 
