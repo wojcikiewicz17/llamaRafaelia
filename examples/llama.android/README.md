@@ -14,7 +14,7 @@ Este documento define o caminho **local + CI** para gerar artefatos Android com 
   - `build-tools;34.0.0`
   - `platform-tools`
   - `cmdline-tools;latest`
-- **NDK:** `26.1.10909125` (fixar em `local.properties`)
+- **NDK:** `26.1.10909125` (fixado no módulo `llama` via `ndkVersion` e também em `local.properties`)
 - **CMake:** 3.22.1 (coerente com `externalNativeBuild.cmake.version`)
 
 ### Bootstrap recomendado (Linux/macOS)
@@ -138,9 +138,9 @@ $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs \
 
 ## 5) ABIs suportadas e validação arm32/arm64
 
-Sem `abiFilters` configurado, o build JNI usa os ABIs padrão suportados pelo plugin/NDK.
+O módulo nativo `llama` está configurado para gerar `armeabi-v7a` e `arm64-v8a` via `ndk.abiFilters`.
 
-Para forçar build multi-ABI típico de validação (incluindo arm32 + arm64), configurar no módulo nativo (`llama/build.gradle.kts`):
+Configuração atual no módulo nativo (`llama/build.gradle.kts`):
 
 ```kotlin
 android {
@@ -175,19 +175,20 @@ adb shell getprop ro.product.cpu.abilist
 
 ```bash
 cd examples/llama.android
-./gradlew build --no-daemon
+./gradlew clean :app:assembleDebug :app:assembleRelease :app:bundleRelease --no-daemon
 ```
 
 - Equivalência local direta:
 
 ```bash
 cd examples/llama.android
-./gradlew build --no-daemon
+./gradlew clean :app:assembleDebug :app:assembleRelease :app:bundleRelease --no-daemon
 ```
 
 ### Job `android-ndk-build`
 
 - CI cobre build nativo com CMake/NDK em matriz (ex.: `arm64-cpu`, `arm64-snapdragon`) usando toolchain Android e presets/defines específicos.
+- O job `android-build` também publica artefatos Gradle (APK debug, APK release unsigned e AAB release) via `actions/upload-artifact`.
 - Equivalência local (nativo puro, fora AGP), exemplo arm64 CPU:
 
 ```bash

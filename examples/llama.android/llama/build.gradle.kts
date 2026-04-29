@@ -8,6 +8,7 @@ val llamaAndroidAbis = listOf("armeabi-v7a", "arm64-v8a")
 android {
     namespace = "android.llama.cpp"
     compileSdk = 34
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         minSdk = 33
@@ -15,7 +16,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
         ndk {
-            abiFilters += llamaAndroidAbis
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
         externalNativeBuild {
             cmake {
