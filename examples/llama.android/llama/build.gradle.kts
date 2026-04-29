@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val llamaAndroidAbis = listOf("armeabi-v7a", "arm64-v8a")
+
 android {
     namespace = "android.llama.cpp"
     compileSdk = 34
@@ -22,6 +24,7 @@ android {
                 arguments += "-DLLAMA_BUILD_COMMON=ON"
                 arguments += "-DGGML_LLAMAFILE=OFF"
                 arguments += "-DCMAKE_BUILD_TYPE=Release"
+                arguments += "-DLLAMA_ANDROID_ABIS=${llamaAndroidAbis.joinToString(";")}"
                 cppFlags += listOf()
                 arguments += listOf()
 

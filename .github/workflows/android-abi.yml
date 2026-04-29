@@ -1,0 +1,96 @@
+name: Android ABI Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'examples/llama.android/**'
+      - '.github/workflows/android-abi.yml'
+  pull_request:
+    paths:
+      - 'examples/llama.android/**'
+      - '.github/workflows/android-abi.yml'
+
+jobs:
+  build-android-abi:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: examples/llama.android
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK + NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept licenses and install packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1" "ndk;26.3.11579264"
+
+      - name: Build unsigned release + signed debug
+        run: |
+          ./gradlew --no-daemon :app:assembleRelease :app:assembleDebug
+
+      - name: Validate native ABI outputs
+        run: |
+          test -f llama/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/armeabi-v7a/libllama-android.so
+          test -f llama/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a/libllama-android.so
+
+      - name: Validate APK outputs by ABI
+        run: |
+          test -f app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk
+          test -f app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
+          test -f app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk
+          test -f app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+
+      - name: Generate internal signed release apks
+        run: |
+          keytool -genkeypair -v -keystore /tmp/internal-ci.keystore -alias internalci \
+            -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 365 \
+            -dname "CN=internal-ci, OU=CI, O=llama, L=CI, ST=NA, C=US"
+
+          for apk in app/build/outputs/apk/release/*-unsigned.apk; do
+            signed="${apk%-unsigned.apk}-internal-signed.apk"
+            apksigner sign --ks /tmp/internal-ci.keystore --ks-pass pass:android --key-pass pass:android --out "$signed" "$apk"
+            apksigner verify "$signed"
+          done
+
+      - name: Upload native libs per ABI
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-native-libs
+          path: |
+            examples/llama.android/llama/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/armeabi-v7a/libllama-android.so
+            examples/llama.android/llama/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/arm64-v8a/libllama-android.so
+
+      - name: Upload unsigned release APKs per ABI
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-release-unsigned-apks
+          path: |
+            examples/llama.android/app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk
+            examples/llama.android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
+
+      - name: Upload signed debug APKs per ABI
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-debug-signed-apks
+          path: |
+            examples/llama.android/app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk
+            examples/llama.android/app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+
+      - name: Upload internal signed release APKs per ABI
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-android-release-internal-signed-apks
+          path: examples/llama.android/app/build/outputs/apk/release/*-internal-signed.apk

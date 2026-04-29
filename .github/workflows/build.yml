@@ -1300,7 +1300,20 @@ jobs:
         with:
           log-accepted-android-sdk-licenses: false
 
-      - name: Build
+      - name: Build debug APK
+        working-directory: examples/llama.android
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Build release APK (unsigned or signed)
+        working-directory: examples/llama.android
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Build release AAB
+        working-directory: examples/llama.android
+        run: ./gradlew :app:bundleRelease --no-daemon
+
+      - name: Validate Android build artifacts
+        shell: bash
         run: |
           cd examples/llama.android
           ./gradlew clean :app:assembleDebug :app:assembleRelease :app:bundleRelease --no-daemon
